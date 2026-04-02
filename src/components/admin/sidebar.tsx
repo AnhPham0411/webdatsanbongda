@@ -15,7 +15,9 @@ import {
   Star,
   MapPin,
   ListOrdered,
-  TicketPercent // 1. Import icon mới cho Voucher
+  TicketPercent,
+  Activity,
+  ShoppingBag
 } from "lucide-react";
 
 const routes = [
@@ -40,14 +42,7 @@ const routes = [
     color: "text-green-700",
     roles: ["ADMIN", "STAFF"],
   },
-  // 2. Thêm mục Mã giảm giá (Voucher) vào đây
-  {
-    label: "Mã giảm giá",
-    icon: TicketPercent,
-    href: "/admin/voucher",
-    color: "text-emerald-500", // Màu xanh ngọc biểu thị tiền bạc/khuyến mãi
-    roles: ["ADMIN", "STAFF"], // Staff cần xem để biết mã nào đang chạy
-  },
+
   {
     label: "Quản lý Sân",
     icon: DoorOpen,
@@ -70,8 +65,8 @@ const routes = [
     roles: ["ADMIN"],
   },
   {
-    label: "Tiện nghi",
-    icon: ListOrdered,
+    label: "Dịch vụ",
+    icon: ShoppingBag,
     href: "/admin/amenities",
     color: "text-orange-700",
     roles: ["ADMIN"],
@@ -112,13 +107,21 @@ export const AdminSidebar = () => {
   return (
     <div className="space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white w-64 border-r border-slate-800">
       <div className="px-3 py-2 flex-1">
-        <Link href="/admin" className="flex items-center pl-3 mb-10">
-          <div className="relative w-8 h-8 mr-4">
-             {/* Logo placeholder */}
+        <Link href="/admin" className="flex items-center gap-3 group pl-3 mb-10">
+          {/* Stylized Icon */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-400/20 group-hover:bg-sky-600 group-hover:scale-105 transition-all duration-300">
+            <Activity className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            Sport Arena
-          </h1>
+          
+          {/* Stylized Text */}
+          <div className="flex flex-col">
+            <span className="text-lg font-bold tracking-tight text-white leading-none">
+              Sport
+            </span>
+            <span className="text-xs font-bold text-sky-400 tracking-[0.2em] uppercase">
+              Arena
+            </span>
+          </div>
         </Link>
         <div className="space-y-1">
           {filteredRoutes.map((route) => (

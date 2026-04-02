@@ -16,8 +16,8 @@ export const getDashboardStats = async () => {
     // 2. Số lượng đơn đặt phòng (Cả 2 đều thấy)
     const bookingsCount = await db.booking.count();
 
-    // 3. Số lượng phòng đang hoạt động (Cả 2 đều thấy)
-    const activeRoomsCount = await db.room.count({
+    // 3. Số lượng sân đang hoạt động (Cả 2 đều thấy)
+    const activeRoomsCount = await db.court.count({
       where: { isAvailable: true }
     });
 
@@ -27,16 +27,32 @@ export const getDashboardStats = async () => {
       orderBy: { createdAt: "desc" },
       include: {
         user: true,
-        room: true,
+        court: true,
       },
     });
+
+    // 5. Tìm sân được đặt nhiều nhất (Top Court)
+    const topCourtResult = await db.booking.groupBy({
+      by: ["courtId"],
+      _count: { courtId: true },
+      orderBy: { _count: { courtId: "desc" } },
+      take: 1,
+    });
+
+    let topCourt = "Chưa có dữ liệu";
+    if (topCourtResult.length > 0) {
+      const court = await db.court.findUnique({
+        where: { id: topCourtResult[0].courtId },
+      });
+      if (court) topCourt = court.name;
+    }
 
     // --- PHÂN QUYỀN DỮ LIỆU NHẠY CẢM ---
     let revenue = 0;
     let graphRevenue: any[] = [];
 
     if (role === "ADMIN") {
-      // 5. Tổng doanh thu (Chỉ ADMIN thấy)
+      // 6. Tổng doanh thu (Chỉ ADMIN thấy)
       const paidBookings = await db.booking.findMany({
         where: {
           status: { in: ["CONFIRMED", "CHECKED_IN", "CHECKED_OUT"] }
@@ -47,16 +63,17 @@ export const getDashboardStats = async () => {
         return total + Number(booking.totalPrice);
       }, 0);
 
-      // 6. Dữ liệu biểu đồ (Chỉ ADMIN thấy)
+      // 7. Dữ liệu biểu đồ (Chỉ ADMIN thấy) - 7 ngày gần nhất
       graphRevenue = await getGraphRevenue();
     }
 
     return {
-      revenue,           // Sẽ là 0 nếu là STAFF
+      revenue,
       bookingsCount,
       activeRoomsCount,
+      topCourt,
       recentBookings,
-      graphRevenue       // Sẽ là mảng rỗng nếu là STAFF
+      graphRevenue
     };
   } catch (error) {
     console.log("[DASHBOARD_GET]", error);
@@ -64,34 +81,49 @@ export const getDashboardStats = async () => {
   }
 };
 
-// Hàm phụ: Nhóm doanh thu theo 12 tháng (Hàm này thực tế chỉ được gọi bởi Admin ở trên)
+// Hàm phụ: Nhóm doanh thu theo 7 ngày gần nhất
 const getGraphRevenue = async () => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Lấy từ 6 ngày trước + hôm nay = 7 ngày
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
   const paidBookings = await db.booking.findMany({
     where: {
+      createdAt: { gte: sevenDaysAgo },
       status: { in: ["CONFIRMED", "CHECKED_IN", "CHECKED_OUT"] }
     }
   });
 
-  const monthlyRevenue: { [key: number]: number } = {};
-  for (let i = 0; i < 12; i++) monthlyRevenue[i] = 0;
+  const dailyRevenue: { [key: string]: number } = {};
+  
+  // Khởi tạo 7 ngày với giá trị 0
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    d.setHours(0, 0, 0, 0);
+    const dateKey = d.toISOString().split("T")[0];
+    dailyRevenue[dateKey] = 0;
+  }
 
   for (const order of paidBookings) {
-    const month = order.createdAt.getMonth();
-    monthlyRevenue[month] = (monthlyRevenue[month] || 0) + Number(order.totalPrice);
+    const dateKey = order.createdAt.toISOString().split("T")[0];
+    if (dailyRevenue[dateKey] !== undefined) {
+      dailyRevenue[dateKey] += Number(order.totalPrice);
+    }
   }
 
-  const graphData = [
-    { name: "Thg 1", total: 0 }, { name: "Thg 2", total: 0 },
-    { name: "Thg 3", total: 0 }, { name: "Thg 4", total: 0 },
-    { name: "Thg 5", total: 0 }, { name: "Thg 6", total: 0 },
-    { name: "Thg 7", total: 0 }, { name: "Thg 8", total: 0 },
-    { name: "Thg 9", total: 0 }, { name: "Thg 10", total: 0 },
-    { name: "Thg 11", total: 0 }, { name: "Thg 12", total: 0 },
-  ];
-
-  for (const month in monthlyRevenue) {
-    graphData[parseInt(month)].total = monthlyRevenue[parseInt(month)];
-  }
+  // Chuyển đổi sang định dạng biểu đồ (Sắp xếp theo thời gian tăng dần)
+  const graphData = Object.keys(dailyRevenue)
+    .sort()
+    .map((date) => {
+      const d = new Date(date);
+      const dayName = d.toLocaleDateString("vi-VN", { weekday: "short" });
+      const dayNumber = d.getDate();
+      return {
+        name: `${dayName} ${dayNumber}`,
+        total: dailyRevenue[date]
+      };
+    });
 
   return graphData;
 };

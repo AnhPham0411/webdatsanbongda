@@ -11,20 +11,20 @@ const SLIDES = [
   {
     id: 1,
     image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=1920",
-    title: "Hệ Thống Đặt Sân Bóng Chuyên Nghiệp",
-    subtitle: "Khám phá hệ thống sân bóng hiện đại với trải nghiệm tuyệt vời.",
+    title: "Hệ Thống Đặt Sân Bóng Sân 7 Nhanh Chóng",
+    subtitle: "Sport Arena giúp bạn tìm và giữ chỗ sân 7 nhanh chóng. Hệ thống cụm sân được bảo trì thường xuyên.",
   },
   {
     id: 2,
     image: "/assets/images/hero-passion.png",
     title: "Sức Khỏe Và Đam Mê",
-    subtitle: "Chọn sân dễ dàng, thỏa sức đam mê với trái bóng tròn.",
+    subtitle: "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, phù hợp cho anh em đá phủi.",
   },
   {
     id: 3,
     image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=1920",
-    title: "Giao Hữu & Thi Đấu",
-    subtitle: "Kết nối đam mê, tổ chức những trận đấu đỉnh cao.",
+    title: "Giao Hữu & Kết Nối",
+    subtitle: "Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng.",
   },
 ];
 

@@ -1,7 +1,7 @@
 import { getDashboardStats } from "@/actions/admin/dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import OverviewChart from "@/components/admin/overview-chart";
-import { CreditCard, Users, BedDouble, CalendarDays, DollarSign, Activity, TrendingUp } from "lucide-react";
+import { CreditCard, Users, BedDouble, CalendarDays, DollarSign, Activity, TrendingUp, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ export default async function DashboardPage() {
       revenue: 0, 
       bookingsCount: 0, 
       activeRoomsCount: 0, 
+      topCourt: "Chưa có dữ liệu",
       recentBookings: [],
       graphRevenue: [] 
   };
@@ -37,58 +38,57 @@ export default async function DashboardPage() {
         </div>
       </div>
       
-      {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-sky-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-sky-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(Number(data.revenue))}</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-               <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-               <span className="text-green-600 font-medium">+20.1%</span> so với tháng trước
+            <div className="text-2xl font-bold">
+              {data.revenue > 0 ? formatCurrency(Number(data.revenue)) : "N/A"}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+               Chỉ Quản trị viên
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-sky-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đơn đặt sân</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Số đơn đặt sân</CardTitle>
+            <CalendarDays className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{data.bookingsCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Đơn hàng trong hệ thống
+              Toàn bộ thời gian
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-sky-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Sân được đặt nhiều nhất</CardTitle>
+            <Trophy className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold truncate pr-2">{data.topCourt}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Phổ biến nhất
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-sky-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sân hoạt động</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.activeRoomsCount}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Sân sẵn sàng đón khách
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tỷ lệ lấp đầy</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {/* Giả lập số liệu tỷ lệ lấp đầy */}
-            <div className="text-2xl font-bold">85%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-               Hiệu suất tuần này
+               Đang sẵn sàng
             </p>
           </CardContent>
         </Card>
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle>Biểu đồ doanh thu</CardTitle>
             <CardDescription>
-                Doanh thu ước tính theo từng tháng trong năm nay.
+                Doanh thu thực tế trong 7 ngày gần nhất.
             </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
                         {booking.user?.name || booking.guestName || "Khách vãng lai"}
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center">
-                        {booking.room.name} 
+                        {booking.court.name} 
                         <span className="mx-1">•</span> 
                         {format(new Date(booking.createdAt), "dd/MM")}
                     </p>

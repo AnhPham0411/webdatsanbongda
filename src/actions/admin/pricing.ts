@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth"; // Đảm bảo import đúng cấu hình auth của bạn
 
 const SeasonalPriceSchema = z.object({
-  roomId: z.string(),
+  courtId: z.string(),
   startDate: z.date(),
   endDate: z.date(),
   price: z.coerce.number().min(0, "Giá không được âm"),
@@ -28,7 +28,7 @@ export const createSeasonalPrice = async (values: z.infer<typeof SeasonalPriceSc
     const validated = SeasonalPriceSchema.safeParse(values);
     if (!validated.success) return { error: "Dữ liệu không hợp lệ!" };
 
-    const { roomId, startDate, endDate, price } = validated.data;
+    const { courtId, startDate, endDate, price } = validated.data;
 
     // 1. Validate Logic: Ngày bắt đầu phải trước ngày kết thúc
     if (startDate >= endDate) {
@@ -38,7 +38,7 @@ export const createSeasonalPrice = async (values: z.infer<typeof SeasonalPriceSc
     // 2. Validate Logic: Kiểm tra xem khoảng thời gian này đã có giá mùa vụ nào chưa?
     const existingPrice = await db.seasonalPrice.findFirst({
       where: {
-        roomId,
+        courtId,
         OR: [
           {
             startDate: { lte: endDate },
@@ -57,14 +57,14 @@ export const createSeasonalPrice = async (values: z.infer<typeof SeasonalPriceSc
     // 3. Tạo mới
     await db.seasonalPrice.create({
       data: {
-        roomId,
+        courtId,
         startDate,
         endDate,
         price,
       },
     });
 
-    revalidatePath(`/admin/rooms/${roomId}`);
+    revalidatePath(`/admin/rooms/${courtId}`);
     return { success: "Đã thiết lập giá mùa vụ thành công!" };
   } catch (error: any) {
     if (error.message === "Unauthorized") return { error: "Bạn không có quyền thiết lập giá!" };
@@ -73,13 +73,13 @@ export const createSeasonalPrice = async (values: z.infer<typeof SeasonalPriceSc
   }
 };
 
-export const deleteSeasonalPrice = async (id: string, roomId: string) => {
+export const deleteSeasonalPrice = async (id: string, courtId: string) => {
   try {
     // 🛑 CHẶN QUYỀN: Chỉ Admin mới được xóa biểu giá
     await checkAdmin();
 
     await db.seasonalPrice.delete({ where: { id } });
-    revalidatePath(`/admin/rooms/${roomId}`);
+    revalidatePath(`/admin/rooms/${courtId}`);
     return { success: "Đã xóa giá mùa vụ!" };
   } catch (error: any) {
     if (error.message === "Unauthorized") return { error: "Bạn không có quyền thực hiện hành động này!" };

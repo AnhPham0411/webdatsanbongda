@@ -62,11 +62,11 @@ export const RoomCard = ({ room, currentUser }: RoomCardProps) => {
 
       {/* --- PHẦN NỘI DUNG --- */}
       <CardContent className="p-5 flex-1 flex flex-col">
-        <div className="mb-3">
-           <span className="text-[11px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-md">
-              {room.roomType.name}
-           </span>
-        </div>
+         <div className="mb-3">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-md">
+               {room.roomType.name}
+            </span>
+         </div>
 
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-blue-700 transition-colors">
