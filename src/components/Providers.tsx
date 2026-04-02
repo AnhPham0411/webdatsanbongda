@@ -1,0 +1,12 @@
+// components/Providers.tsx
+"use client"; // <--- Dòng này quan trọng nhất: Biến file này thành Client Component
+
+import { SessionProvider } from "next-auth/react";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      {children}
+    </SessionProvider>
+  );
+}

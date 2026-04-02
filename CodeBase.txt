@@ -1,0 +1,97 @@
+my-hotel/
+├── .env                       # Biến môi trường (DB, Auth Secret)
+├── package.json               # Các thư viện cần cài
+├── next.config.mjs            # Cấu hình Next.js
+├── tsconfig.json              # Cấu hình TypeScript
+├── tailwind.config.ts         # Cấu hình TailwindCSS
+├── middleware.ts              # Xử lý bảo vệ route (Chặn chưa login)
+├── prisma/
+│   ├── schema.prisma          # Database Schema (Final version)
+│   └── seed.ts                # Dữ liệu mẫu
+├── public/
+│   ├── images/                # Chứa ảnh upload
+│   └── uploads/               # Folder dự phòng
+├── src/
+│   ├── actions/               # [SERVER ACTIONS] - Logic Backend
+│   │   ├── auth.ts            # Login, Register, Logout
+│   │   ├── admin/             # Logic Admin
+│   │   │   ├── amenities.ts   # CRUD Tiện nghi
+│   │   │   ├── bookings.ts    # Duyệt đơn, Check-in
+│   │   │   ├── calendar.ts    # Gantt Chart Data
+│   │   │   ├── categories.ts  # CRUD Loại phòng
+│   │   │   ├── dashboard.ts   # Thống kê doanh thu
+│   │   │   ├── rooms.ts       # CRUD Phòng
+│   │   │   ├── users.ts       # Quản lý User
+│   │   │   └── pricing.ts     # Giá mùa vụ
+│   │   └── client/            # Logic Client
+│   │       ├── booking.ts     # Transaction đặt phòng
+│   │       ├── get-rooms.ts   # Tìm kiếm, Filter
+│   │       ├── profile.ts     # Update thông tin cá nhân
+│   │       └── reviews.ts     # Gửi đánh giá
+│   ├── app/                   # [ROUTING] - Pages
+│   │   ├── api/               # API Routes (Webhooks)
+│   │   │   ├── auth/[...nextauth]/route.ts
+│   │   │   └── upload/route.ts
+│   │   ├── (auth)/            # Layout Auth (Căn giữa)
+│   │   │   ├── layout.tsx
+│   │   │   ├── login/page.tsx
+│   │   │   ├── register/page.tsx
+│   │   │   └── error/page.tsx
+│   │   ├── (admin)/           # Layout Admin (Sidebar + Header)
+│   │   │   ├── layout.tsx
+│   │   │   └── admin/
+│   │   │       ├── dashboard/page.tsx
+│   │   │       ├── rooms/
+│   │   │       │   ├── page.tsx
+│   │   │       │   ├── new/page.tsx
+│   │   │       │   └── [roomId]/page.tsx
+│   │   │       ├── categories/page.tsx
+│   │   │       ├── amenities/page.tsx
+│   │   │       ├── bookings/page.tsx
+│   │   │       ├── calendar/page.tsx
+│   │   │       ├── users/page.tsx
+│   │   │       ├── reviews/page.tsx
+│   │   │       └── settings/page.tsx
+│   │   └── (public)/          # Layout Public (Navbar + Footer)
+│   │       ├── layout.tsx
+│   │       ├── page.tsx       # Trang chủ
+│   │       ├── search/page.tsx
+│   │       ├── rooms/[roomId]/page.tsx
+│   │       ├── my-bookings/page.tsx
+│   │       └── profile/page.tsx
+│   ├── components/            # [UI COMPONENTS]
+│   │   ├── ui/                # Shadcn UI (Button, Input...)
+│   │   ├── admin/             # UI Admin
+│   │   │   ├── sidebar.tsx
+│   │   │   ├── navbar.tsx
+│   │   │   ├── overview-chart.tsx
+│   │   │   ├── room-form.tsx
+│   │   │   └── status-badge.tsx
+│   │   ├── client/            # UI Client
+│   │   │   ├── navbar.tsx
+│   │   │   ├── footer.tsx
+│   │   │   ├── hero.tsx
+│   │   │   ├── room-card.tsx
+│   │   │   ├── booking-form.tsx
+│   │   │   ├── search-filters.tsx
+│   │   │   └── reviews-list.tsx
+│   │   └── auth/              # UI Auth
+│   │       ├── login-form.tsx
+│   │       ├── register-form.tsx
+│   │       └── social-buttons.tsx
+│   ├── hooks/                 # Custom Hooks
+│   │   ├── use-current-user.ts
+│   │   └── use-cart.ts
+│   ├── lib/                   # Config & Utilities
+│   │   ├── db.ts              # Prisma Instance
+│   │   ├── auth.ts            # NextAuth Config
+│   │   ├── utils.ts           # Helper (cn, formatDate)
+│   │   └── tokens.ts          # Token helper
+│   ├── schemas/               # Zod Validations
+│   │   └── index.ts
+│   └── types/                 # TypeScript Types
+│       └── index.ts
+
+
+npm install next react react-dom next-auth@beta @prisma/client @hookform/resolvers/zod zod date-fns lucide-react recharts clsx tailwind-merge sonner bcryptjs
+npm install -D prisma types/node types/react types/bcryptjs
