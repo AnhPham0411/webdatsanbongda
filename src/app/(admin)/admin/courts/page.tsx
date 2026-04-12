@@ -1,3 +1,8 @@
+/**
+ * @file page.tsx (Admin Courts)
+ * @description Trang danh sách sân bóng dành cho quản trị viên.
+ * Cho phép tìm kiếm, lọc và thực hiện các thao tác quản lý nhanh.
+ */
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -31,6 +36,10 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams?.query || "";
 
+  /**
+   * Truy vấn danh sách sân bóng từ Database (Prisma).
+   * Bao gồm logic tìm kiếm theo tên sân, loại sân hoặc tên khu vực.
+   */
   const courts = await db.court.findMany({
     where: {
       OR: [
@@ -51,7 +60,7 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
   });
 
   const totalCourts = courts.length;
-  const activeCourts = courts.filter(c => c.isAvailable).length;
+  const activeCourts = courts.filter((c: any) => c.isAvailable).length;
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex overflow-y-auto">
@@ -65,7 +74,7 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Link href="/admin/rooms/new">
+          <Link href="/admin/courts/new">
             <Button size="sm" className="h-9">
               <Plus className="mr-2 h-4 w-4" /> Thêm sân mới
             </Button>
@@ -73,20 +82,20 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
         </div>
       </div>
 
-      {/* 2. TOOLBAR */}
+      {/* 2. Thanh công cụ (Toolbar): Tìm kiếm và bộ lọc nhanh */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-1 rounded-lg">
         <div className="flex w-full sm:w-auto items-center space-x-2">
           <form className="relative w-full sm:w-[350px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               name="query"
-              placeholder="Tìm theo tên sân, loại sân hoặc cụm sân..."
+              placeholder="Tìm theo tên sân, hạng sân hoặc khu vực..."
               className="pl-8 h-9"
               defaultValue={query}
             />
           </form>
           {query && (
-            <Link href="/admin/rooms">
+            <Link href="/admin/courts">
               <Button variant="ghost" size="sm" className="h-9 px-2 lg:px-3">
                 Reset <X className="ml-2 h-4 w-4" />
               </Button>
@@ -102,15 +111,15 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
         </div>
       </div>
 
-      {/* 3. DATA TABLE */}
+      {/* 3. Bảng dữ liệu (Data Table): Hiển thị danh sách sân bóng */}
       <div className="rounded-md border bg-white shadow-sm overflow-x-auto">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead className="w-[80px]">Ảnh</TableHead>
+              <TableHead className="w-[100px]">Mã sân</TableHead>
               <TableHead className="min-w-[150px]">Tên sân</TableHead>
-              <TableHead className="min-w-[150px]">Cụm sân</TableHead>
-              <TableHead className="min-w-[150px]">Loại sân</TableHead>
+              <TableHead className="min-w-[150px]">Khu vực / Cụm</TableHead>
+              <TableHead className="min-w-[150px]">Hạng sân</TableHead>
               <TableHead>Sức chứa</TableHead>
               <TableHead className="text-right">Giá / ca</TableHead>
               <TableHead>Trạng thái</TableHead>
@@ -138,12 +147,9 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
               courts.map((court) => (
                 <TableRow key={court.id} className="hover:bg-slate-50/50 transition-colors">
                   <TableCell>
-                    <Avatar className="h-10 w-10 rounded-lg border">
-                        <AvatarImage src={court.images[0]?.url} className="object-cover" />
-                        <AvatarFallback className="rounded-lg bg-slate-100 text-slate-400">
-                            <Activity className="h-5 w-5" />
-                        </AvatarFallback>
-                    </Avatar>
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                        <Activity className="h-5 w-5 text-blue-500" />
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
@@ -177,7 +183,7 @@ export default async function CourtsPage({ searchParams }: CourtsPageProps) {
                     <StatusBadge status={court.isAvailable} type="court" />
                   </TableCell>
                   <TableCell className="text-right">
-                    <CourtActions id={court.id} />
+                    <CourtActions id={court.id} isAvailable={court.isAvailable} />
                   </TableCell>
                 </TableRow>
               ))

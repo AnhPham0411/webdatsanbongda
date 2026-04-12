@@ -13,6 +13,7 @@ import {
   Copy,
   QrCode
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { BookingStatus, PaymentStatus, UserRole } from "@prisma/client"; // Import thêm UserRole
 import { PaymentQRModal } from "@/components/admin/payment-qr-modal";
 import {
@@ -47,6 +48,7 @@ export const BookingActions = ({
   guestName,
   currentUserRole // 👈 Destructure role
 }: BookingActionsProps) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   // Logic kiểm tra nhanh quyền Admin
@@ -61,7 +63,10 @@ export const BookingActions = ({
     setLoading(true);
     const res = await updateBookingStatus(id, newStatus);
     if (res.error) toast.error(res.error);
-    else toast.success(res.success);
+    else {
+      toast.success(res.success);
+      router.refresh();
+    }
     setLoading(false);
   };
 
@@ -69,7 +74,10 @@ export const BookingActions = ({
     setLoading(true);
     const res = await updatePaymentStatus(id, newStatus);
     if (res.error) toast.error(res.error);
-    else toast.success(res.success);
+    else {
+      toast.success(res.success);
+      router.refresh();
+    }
     setLoading(false);
   };
 
@@ -84,7 +92,10 @@ export const BookingActions = ({
     setLoading(true);
     const res = await deleteBooking(id);
     if (res.error) toast.error(res.error);
-    else toast.success(res.success);
+    else {
+      toast.success(res.success);
+      router.refresh();
+    }
     setLoading(false);
   };
 

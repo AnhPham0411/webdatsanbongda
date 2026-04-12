@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Location } from "@prisma/client";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -144,12 +145,8 @@ export const LocationsClient = ({ data }: LocationsClientProps) => {
         {data.map((item) => (
           <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition">
             <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-md overflow-hidden relative border bg-gray-100 flex items-center justify-center">
-                    {item.imageUrl ? (
-                         <img src={item.imageUrl} alt={item.name} className="object-cover w-full h-full" />
-                    ) : (
-                        <MapPin className="h-6 w-6 text-gray-400" />
-                    )}
+                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                    <MapPin className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
                     <h3 className="font-semibold text-lg">{item.name}</h3>

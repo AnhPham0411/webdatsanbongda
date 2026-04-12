@@ -9,8 +9,7 @@ const NewCategoryPage = async () => {
     },
   });
 
-  // 2. Lấy danh sách vị trí (MỚI THÊM)
-  // Lưu ý: Kiểm tra lại tên bảng trong schema của bạn (db.location, db.hotel, hay db.branch...)
+  // 2. Lấy danh sách vị trí
   const locations = await db.location.findMany({
     orderBy: {
       name: "asc",

@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Loader2, Save } from "lucide-react";
@@ -64,6 +65,7 @@ interface SettingsFormProps {
 }
 
 export const SettingsForm = ({ initialData }: SettingsFormProps) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<SettingsFormValues>({
@@ -90,6 +92,7 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
       const res = await updateSettings(values);
       if (res.success) {
         toast.success("Cập nhật cài đặt thành công");
+        router.refresh();
       } else {
         toast.error(res.error || "Có lỗi xảy ra");
       }

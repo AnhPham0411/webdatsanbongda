@@ -10,19 +10,19 @@ import { cn } from "@/lib/utils";
 const SLIDES = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=1920",
+    image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
     title: "Hệ Thống Đặt Sân Bóng Sân 7 Nhanh Chóng",
     subtitle: "Sport Arena giúp bạn tìm và giữ chỗ sân 7 nhanh chóng. Hệ thống cụm sân được bảo trì thường xuyên.",
   },
   {
     id: 2,
-    image: "/assets/images/hero-passion.png",
+    image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=1200",
     title: "Sức Khỏe Và Đam Mê",
     subtitle: "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, phù hợp cho anh em đá phủi.",
   },
   {
     id: 3,
-    image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=1920",
+    image: "/images/friendly-connection.png",
     title: "Giao Hữu & Kết Nối",
     subtitle: "Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng.",
   },
@@ -53,7 +53,7 @@ export const HeroSlider = () => {
             index === current ? "opacity-100 z-10" : "opacity-0 z-0"
           )}
         >
-          {/* Ảnh nền */}
+          {/* Ảnh nền - Đã khôi phục */}
           <div className="relative w-full h-full">
             <Image
               src={slide.image}
@@ -68,7 +68,7 @@ export const HeroSlider = () => {
 
           {/* Nội dung Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 z-20 space-y-4 pt-10">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-lg transform transition-all duration-700 translate-y-0 opacity-100">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-lg">
               {slide.title}
             </h1>
             <p className="text-lg md:text-xl font-light max-w-2xl drop-shadow-md text-slate-100">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import { VoucherForm } from "./voucher-form";
 import { deleteVoucher, toggleVoucherStatus, sendVoucherToUsers } from "@/actions/admin/voucher"; // Nhớ import đúng hàm sendVoucherToUsers
 
 export const VoucherClient = ({ data }: { data: any[] }) => {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
 
@@ -84,10 +86,10 @@ export const VoucherClient = ({ data }: { data: any[] }) => {
                       <DropdownMenuItem onClick={() => onOpenEdit(v)}>
                         <Edit className="mr-2 h-4 w-4" /> Chỉnh sửa
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => toggleVoucherStatus(v.id, v.isActive)}>
+                      <DropdownMenuItem onClick={() => toggleVoucherStatus(v.id, v.isActive).then(() => router.refresh())}>
                         <Power className="mr-2 h-4 w-4" /> {v.isActive ? "Tắt mã" : "Kích hoạt"}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => confirm("Xóa vĩnh viễn mã này?") && deleteVoucher(v.id)} className="text-red-600 focus:text-red-600">
+                      <DropdownMenuItem onClick={() => confirm("Xóa vĩnh viễn mã này?") && deleteVoucher(v.id).then(() => router.refresh())} className="text-red-600 focus:text-red-600">
                         <Trash2 className="mr-2 h-4 w-4" /> Xóa mã
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -115,7 +117,10 @@ export const VoucherClient = ({ data }: { data: any[] }) => {
           {/* Form được đặt ở đây */}
           <VoucherForm 
             initialData={selectedVoucher} 
-            onSuccess={() => setIsOpen(false)} 
+            onSuccess={() => {
+              setIsOpen(false);
+              router.refresh();
+            }} 
           />
           
         </DialogContent>

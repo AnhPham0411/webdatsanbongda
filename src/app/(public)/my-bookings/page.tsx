@@ -2,13 +2,16 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image"; // Import Image
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { BookingStatusBadge } from "@/components/client/booking-status-badge"; // Nhớ export const
-import { CancelBookingButton } from "@/components/client/cancel-booking-button"; // Nhớ export const
-import { formatCurrency } from "@/lib/utils"; // Dùng hàm format tiền chung nếu có
+import { BookingStatusBadge } from "@/components/client/booking-status-badge"; 
+import { CancelBookingButton } from "@/components/client/cancel-booking-button"; 
+import Image from "next/image";
+import { QrCode } from "lucide-react";
+import { PaymentQRModal } from "@/components/admin/payment-qr-modal";
+import { generateVietQrUrl } from "@/lib/vietqr";
+import { DeleteBookingButton } from "@/components/client/delete-booking-button";
 
 export default async function MyBookingsPage() {
   const session = await auth();
@@ -21,7 +24,7 @@ export default async function MyBookingsPage() {
     where: { userId: session.user.id },
     include: {
       court: {
-        include: { images: true, courtType: true }
+        include: { images: true, courtType: true } // Renamed in schema.prisma
       },
       timeSlot: true,
       payment: true
@@ -42,24 +45,24 @@ export default async function MyBookingsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {bookings.map((booking) => (
-            <div key={booking.id} className="flex flex-col md:flex-row border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition">
-               {/* Ảnh sân bóng */}
-               <div className="w-full md:w-56 h-48 md:h-auto relative bg-gray-100 shrink-0">
-                  <Image 
-                    src={booking.court?.images[0]?.url || "/images/placeholder.jpg"}
-                    alt={booking.court?.name || "Court"}
-                    fill
-                    className="object-cover"
-                  />
-               </div>
+          {(bookings as any[]).map((booking) => (
+            <div key={booking.id} className="relative flex flex-col md:flex-row border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+               {/* Nút xóa ở góc trái trên cùng (chỉ hiện cho đơn đã xong hoặc hủy) */}
+               {["CHECKED_OUT", "CANCELLED"].includes(booking.status) && (
+                 <div className="absolute top-2 left-2 z-20">
+                    <DeleteBookingButton bookingId={booking.id} />
+                 </div>
+               )}
+
+               {/* Decorative blue bar */}
+               <div className="w-2.5 bg-blue-600 shrink-0" />
 
                {/* Thông tin chi tiết */}
                <div className="flex-1 p-5 flex flex-col justify-between">
                   <div className="flex justify-between items-start gap-4">
                      <div>
                         <h3 className="font-bold text-lg text-primary">{booking.court?.name}</h3>
-                        <p className="text-sm text-gray-500">{booking.court?.courtType.name}</p>
+                        <p className="text-sm text-gray-500">{booking.court?.courtType?.name}</p>
                         <p className="text-xs text-gray-400 mt-1">Mã đơn: #{booking.id.slice(-6).toUpperCase()}</p>
                      </div>
                      <BookingStatusBadge status={booking.status} />
@@ -89,15 +92,68 @@ export default async function MyBookingsPage() {
                   </div>
                </div>
 
+               {/* QR Code section cho PC */}
+               <div className="hidden md:flex p-5 items-center justify-center border-l bg-slate-50/50 w-36 shrink-0">
+                  {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' ? (
+                  <PaymentQRModal 
+                      bookingId={booking.id} 
+                      amount={Number(booking.totalPrice)} 
+                      guestName={booking.guestName || session.user.name || ""} 
+                      customTrigger={
+                        <div className="flex flex-col items-center gap-2 cursor-pointer group hover:scale-105 transition-transform text-center">
+                            <div className="relative w-20 h-20 bg-white p-1.5 border-2 border-blue-100 rounded-xl shadow-sm group-hover:border-blue-400 transition-all">
+                              <Image 
+                                  src={generateVietQrUrl({ amount: Number(booking.totalPrice), bookingId: booking.id })}
+                                  alt="QR Thanh toán" 
+                                  fill 
+                                  className="object-contain"
+                                  unoptimized
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight bg-blue-50 px-2 py-0.5 rounded-full">Quét trả tiền</span>
+                        </div>
+                      }
+                  />
+                  ) : (
+                  <div className="text-center opacity-40">
+                      <QrCode className="w-8 h-8 mx-auto text-slate-400 mb-1" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase block leading-tight">
+                        {booking.paymentStatus === 'PAID' ? 'Đã xong' : 'Đơn hủy'}
+                      </span>
+                  </div>
+                  )}
+               </div>
+
                {/* Nút hành động */}
                <div className="p-4 bg-gray-50 flex flex-row md:flex-col justify-center gap-2 border-t md:border-t-0 md:border-l w-full md:w-40 shrink-0">
                   <Link href={`/rooms/${booking.courtId}`} className="w-full">
                      <Button variant="outline" size="sm" className="w-full">Đặt lại</Button>
                   </Link>
+
+                  {/* Nút QR cho mobile */}
+                  <div className="md:hidden w-full">
+                    {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' && (
+                        <PaymentQRModal 
+                          bookingId={booking.id} 
+                          amount={Number(booking.totalPrice)} 
+                          guestName={booking.guestName || session.user.name || ""} 
+                          customTrigger={
+                              <Button variant="outline" size="sm" className="w-full border-blue-200 text-blue-600 gap-2">
+                                <QrCode className="h-4 w-4" />
+                                Thanh toán
+                              </Button>
+                          }
+                        />
+                    )}
+                  </div>
                   
                   {/* Chỉ hiện nút hủy nếu trạng thái là PENDING hoặc CONFIRMED */}
                   {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
-                      <CancelBookingButton bookingId={booking.id} />
+                      <CancelBookingButton 
+                         bookingId={booking.id} 
+                         date={booking.date} 
+                         timeStart={booking.timeSlot?.startTime} 
+                      />
                   )}
                </div>
             </div>

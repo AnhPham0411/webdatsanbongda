@@ -15,9 +15,9 @@ export default async function CategoryIdPage(props: CategoryIdPageProps) {
   const params = await props.params;
   
   // 1. Lấy thông tin Category hiện tại
-  const category = await db.roomType.findUnique({
+  const category = await db.courtType.findUnique({
     where: { id: params.categoryId },
-    // QUAN TRỌNG: Phải include amenities để biết phòng này đã có tiện nghi gì
+    // QUAN TRỌNG: Phải include amenities để biết sân này đã có tiện nghi gì
     include: {
         amenities: true 
     } 

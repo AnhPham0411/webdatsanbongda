@@ -13,6 +13,7 @@ import {
   Instagram, 
   Twitter 
 } from "lucide-react";
+import { ContactForm } from "@/components/client/contact-form";
 
 export default function ContactPage() {
   return (
@@ -46,7 +47,7 @@ export default function ContactPage() {
                     <div>
                       <p className="font-semibold text-slate-900">Văn phòng quản lý</p>
                       <p className="text-sm text-slate-500 mt-1">
-                        Cụm sân cỏ nhân tạo Chùa Láng, <br />Số 112 Chùa Láng, Quận Đống Đa, Hà Nội
+                        Cụm sân cỏ nhân tạo Chùa Láng, <br />Số 112 Chùa Láng, Khu vực Đống Đa, Hà Nội
                       </p>
                     </div>
                   </div>
@@ -116,43 +117,7 @@ export default function ContactPage() {
                   <p className="text-slate-500">Vui lòng điền vào biểu mẫu dưới đây, đội ngũ Sport Arena sẽ phản hồi sớm nhất.</p>
                 </div>
                 
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Họ và tên</label>
-                      <Input placeholder="Nhập họ tên của bạn" className="bg-sky-50/50 border-sky-100 focus:ring-sky-200 focus:border-sky-400" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Email</label>
-                      <Input placeholder="email@example.com" type="email" className="bg-sky-50/50 border-sky-100 focus:ring-sky-200 focus:border-sky-400" />
-                    </div>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
-                      <Input placeholder="0912..." className="bg-sky-50/50 border-sky-100 focus:ring-sky-200 focus:border-sky-400" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">Chủ đề</label>
-                      <Input placeholder="Ví dụ: Hỏi thuê sân dài hạn, tổ chức giải đấu..." className="bg-sky-50/50 border-sky-100 focus:ring-sky-200 focus:border-sky-400" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Nội dung yêu cầu</label>
-                    <Textarea 
-                      placeholder="Chi tiết yêu cầu của bạn..." 
-                      className="min-h-[150px] bg-sky-50/50 border-sky-100 resize-none focus:ring-sky-200 focus:border-sky-400" 
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button size="lg" className="w-full md:w-auto bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200">
-                      <Send className="w-4 h-4 mr-2" /> Gửi tin nhắn
-                    </Button>
-                  </div>
-                </form>
+                <ContactForm />
               </CardContent>
             </Card>
 

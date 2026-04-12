@@ -7,74 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
-enum UserRole {
-  ADMIN
-  STAFF
-  USER
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CHECKED_IN
-  CHECKED_OUT
-  CANCELLED
-}
-
-enum PaymentStatus {
-  UNPAID
-  PAID
-  REFUNDED
-}
-
-// [MỚI CHO VOUCHER] Loại giảm giá
-enum DiscountType {
-  PERCENT // Giảm theo %
-  FIXED // Giảm số tiền cố định (VND)
-}
-
-// --- MODELS ---
-
-model Location {
-  id          String   @id @default(cuid())
-  name        String
-  address     String?
-  description String?  @db.Text
-  imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  courtTypes CourtType[]
-}
-
-model Sport {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-
-  courtTypes CourtType[]
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  phone         String?
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  bookings Booking[]
-  reviews  Review[]
-  accounts Account[]
-
-  wishlists Wishlist[]
-}
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -88,44 +20,71 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
+  @@map("account")
 }
 
-model CourtType {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-  basePrice   Decimal @db.Decimal(10, 2)
-  capacity    Int
+model Amenity {
+  id         String      @id @default(cuid())
+  name       String
+  icon       String?
+  courtTypes CourtType[] @relation("amenitytocourttype")
 
-  locationId String
-  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  @@map("amenity")
+}
 
-  sportId String
-  sport   Sport  @relation(fields: [sportId], references: [id], onDelete: Cascade)
+model Booking {
+  id                   String                @id @default(cuid())
+  userId               String
+  totalPrice           Decimal               @db.Decimal(10, 2)
+  status               BookingStatus         @default(PENDING)
+  paymentStatus        BookingPaymentStatus  @default(UNPAID)
+  note                 String?
+  guestName            String?
+  guestEmail           String?
+  guestPhone           String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  courtId              String
+  date                 DateTime              @db.Date
+  depositAmount        Decimal               @default(0.00) @db.Decimal(10, 2)
+  discountValue        Decimal               @default(0.00) @db.Decimal(10, 2)
+  originalPrice        Decimal               @default(0.00) @db.Decimal(10, 2)
+  timeSlotId           String
+  voucherId            String?
+  court                Court                 @relation(fields: [courtId], references: [id], map: "Booking_courtId_fkey")
+  timeSlot             TimeSlot              @relation(fields: [timeSlotId], references: [id], map: "Booking_timeSlotId_fkey")
+  user                 User                  @relation(fields: [userId], references: [id], map: "Booking_userId_fkey")
+  voucher              Voucher?              @relation(fields: [voucherId], references: [id], map: "Booking_voucherId_fkey")
+  bookingExtraServices BookingExtraService[]
+  payment              Payment?
+  review               Review?
 
-  courts    Court[]
-  amenities Amenity[]
+  @@index([courtId, date, timeSlotId], map: "Booking_courtId_date_timeSlotId_idx")
+  @@index([timeSlotId], map: "Booking_timeSlotId_fkey")
+  @@index([userId], map: "Booking_userId_idx")
+  @@index([voucherId], map: "Booking_voucherId_idx")
+  @@map("booking")
 }
 
 model Court {
-  id          String   @id @default(cuid())
-  name        String
-  courtTypeId String
-  isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  courtType      CourtType       @relation(fields: [courtTypeId], references: [id], onDelete: Cascade)
+  id             String          @id @default(cuid())
+  name           String
+  courtTypeId    String
+  isAvailable    Boolean         @default(true)
+  createdAt      DateTime        @default(now())
   bookings       Booking[]
+  courtType      CourtType       @relation(fields: [courtTypeId], references: [id], onDelete: Cascade, map: "Court_courtTypeId_fkey")
   images         CourtImage[]
+  Review         Review[]
   seasonalPrices SeasonalPrice[]
+  wishlists      Wishlist[]
 
-  wishlists Wishlist[]
-
-  @@index([courtTypeId])
+  @@index([courtTypeId], map: "Court_courtTypeId_idx")
+  @@map("court")
 }
 
 model CourtImage {
@@ -133,147 +92,253 @@ model CourtImage {
   url     String
   altText String?
   courtId String
-  court   Court   @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  court   Court   @relation(fields: [courtId], references: [id], onDelete: Cascade, map: "CourtImage_courtId_fkey")
 
-  @@index([courtId])
+  @@index([courtId], map: "CourtImage_courtId_idx")
+  @@map("courtimage")
 }
 
-model Amenity {
-  id         String      @id @default(cuid())
-  name       String
-  icon       String?
-  courtTypes CourtType[]
+model CourtType {
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  basePrice   Decimal   @db.Decimal(10, 2)
+  capacity    Int
+  locationId  String
+  sportId     String
+  courts      Court[]
+  location    Location  @relation(fields: [locationId], references: [id], onDelete: Cascade, map: "CourtType_locationId_fkey")
+  sport       Sport     @relation(fields: [sportId], references: [id], onDelete: Cascade, map: "CourtType_sportId_fkey")
+  amenities   Amenity[] @relation("amenitytocourttype")
+
+  @@index([locationId], map: "CourtType_locationId_fkey")
+  @@index([sportId], map: "CourtType_sportId_fkey")
+  @@map("courttype")
 }
 
-// Model Voucher (Mã giảm giá)
-model Voucher {
-  id            String       @id @default(cuid())
-  code          String       @unique
-  discountType  DiscountType
-  discountValue Decimal      @db.Decimal(10, 2)
-  minOrderValue Decimal?     @db.Decimal(10, 2)
-  maxDiscount   Decimal?     @db.Decimal(10, 2)
-  startDate     DateTime
-  endDate       DateTime
-  usageLimit    Int?
-  usedCount     Int          @default(0)
-  isActive      Boolean      @default(true)
+model Location {
+  id          String      @id @default(cuid())
+  name        String
+  address     String?
+  description String?     @db.Text
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  district    String?
+  courtTypes  CourtType[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bookings Booking[]
+  @@map("location")
 }
 
-model TimeSlot {
-  id        String   @id @default(cuid())
-  startTime DateTime @db.Time
-  endTime   DateTime @db.Time
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique(map: "Payment_bookingId_key")
+  amount          Decimal       @db.Decimal(10, 2)
+  provider        String
+  transactionCode String?
+  paymentDate     DateTime      @default(now())
+  status          PaymentStatus @default(UNPAID)
+  booking         Booking       @relation(fields: [bookingId], references: [id], map: "Payment_bookingId_fkey")
 
-  bookings Booking[]
-}
-
-model Booking {
-  id         String   @id @default(cuid())
-  userId     String
-  courtId    String
-  date       DateTime @db.Date
-  timeSlotId String
-
-  totalPrice    Decimal @db.Decimal(10, 2)
-  depositAmount Decimal @default(0) @db.Decimal(10, 2)
-  originalPrice Decimal @default(0) @db.Decimal(10, 2)
-
-  voucherId     String?
-  discountValue Decimal @default(0) @db.Decimal(10, 2)
-
-  status        BookingStatus @default(PENDING)
-  paymentStatus PaymentStatus @default(UNPAID)
-  note          String?
-
-  guestName  String?
-  guestEmail String?
-  guestPhone String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id])
-  court    Court    @relation(fields: [courtId], references: [id])
-  timeSlot TimeSlot @relation(fields: [timeSlotId], references: [id])
-
-  voucher Voucher? @relation(fields: [voucherId], references: [id])
-
-  payment Payment?
-  review  Review?
-
-  @@index([courtId, date, timeSlotId])
-  @@index([userId])
-  @@index([voucherId])
-}
-
-model SeasonalPrice {
-  id        String   @id @default(cuid())
-  courtId   String
-  startDate DateTime
-  endDate   DateTime
-  price     Decimal  @db.Decimal(10, 2)
-  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
-
-  @@index([courtId])
+  @@map("payment")
 }
 
 model Review {
   id         String    @id @default(cuid())
   rating     Int
   comment    String?   @db.Text
+  userId     String
+  bookingId  String?   @unique(map: "Review_bookingId_key")
+  createdAt  DateTime  @default(now())
   adminReply String?   @db.Text
   repliedAt  DateTime?
-  userId     String
-  bookingId  String    @unique
-  createdAt  DateTime  @default(now())
-  user       User      @relation(fields: [userId], references: [id])
-  booking    Booking   @relation(fields: [bookingId], references: [id])
+  courtId    String?
+  booking    Booking?  @relation(fields: [bookingId], references: [id], map: "Review_bookingId_fkey")
+  court      Court?    @relation(fields: [courtId], references: [id], map: "Review_courtId_fkey")
+  user       User      @relation(fields: [userId], references: [id], map: "Review_userId_fkey")
 
-  @@index([userId])
+  @@index([userId], map: "Review_userId_idx")
+  @@index([courtId], map: "Review_courtId_idx")
+  @@map("review")
 }
 
-model Payment {
-  id              String        @id @default(cuid())
-  bookingId       String        @unique
-  amount          Decimal       @db.Decimal(10, 2)
-  provider        String
-  transactionCode String?
-  paymentDate     DateTime      @default(now())
-  status          PaymentStatus @default(UNPAID)
-  booking         Booking       @relation(fields: [bookingId], references: [id])
+model SeasonalPrice {
+  id        String   @id @default(cuid())
+  startDate DateTime
+  endDate   DateTime
+  price     Decimal  @db.Decimal(10, 2)
+  courtId   String
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade, map: "SeasonalPrice_courtId_fkey")
+
+  @@index([courtId], map: "SeasonalPrice_courtId_idx")
+  @@map("seasonalprice")
+}
+
+model Settings {
+  id                 String   @id @default("system")
+  siteName           String   @default("Sport Arena")
+  siteLogo           String?
+  contactEmail       String?
+  contactPhone       String?
+  address            String?
+  openingTime        String   @default("06:00")
+  closingTime        String   @default("23:00")
+  minBookingDuration Int      @default(60)
+  maxAdvanceDays     Int      @default(30)
+  cancelBeforeHours  Int      @default(24)
+  allowGuestBooking  Boolean  @default(true)
+  maintenanceMode    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model Sport {
+  id          String      @id @default(cuid())
+  name        String
+  description String?     @db.Text
+  courtTypes  CourtType[]
+
+  @@map("sport")
+}
+
+model TimeSlot {
+  id        String    @id @default(cuid())
+  startTime DateTime  @db.Time(0)
+  endTime   DateTime  @db.Time(0)
+  bookings  Booking[]
+
+  @@map("timeslot")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String     @unique(map: "User_email_key")
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  phone         String?
+  role          UserRole   @default(USER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  account       Account[]
+  bookings      Booking[]
+  reviews       Review[]
+  wishlists     Wishlist[]
+
+  @@map("user")
+}
+
+model Voucher {
+  id            String              @id @default(cuid())
+  code          String              @unique(map: "Voucher_code_key")
+  discountType  VoucherDiscountType
+  discountValue Decimal             @db.Decimal(10, 2)
+  minOrderValue Decimal?            @db.Decimal(10, 2)
+  maxDiscount   Decimal?            @db.Decimal(10, 2)
+  startDate     DateTime
+  endDate       DateTime
+  usageLimit    Int?
+  usedCount     Int                 @default(0)
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  bookings      Booking[]
+
+  @@map("voucher")
 }
 
 model Wishlist {
   id        String   @id @default(cuid())
   userId    String
   courtId   String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade, map: "Wishlist_courtId_fkey")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Wishlist_userId_fkey")
 
-  @@unique([userId, courtId])
-  @@index([userId])
+  @@unique([userId, courtId], map: "Wishlist_userId_courtId_key")
+  @@index([courtId], map: "Wishlist_courtId_fkey")
+  @@index([userId], map: "Wishlist_userId_idx")
+  @@map("wishlist")
 }
 
-model Settings {
-  id            String   @id @default("system")
-  siteName      String   @default("Sport Arena")
-  siteLogo      String?
-  contactEmail  String?
-  contactPhone  String?
-  address       String?
-  openingTime   String   @default("06:00")
-  closingTime   String   @default("23:00")
-  minBookingDuration Int  @default(60) // phút
-  maxAdvanceDays    Int   @default(30)
-  cancelBeforeHours Int   @default(24)
-  allowGuestBooking Boolean @default(true)
-  maintenanceMode   Boolean @default(false)
-  updatedAt         DateTime @updatedAt
+model ExtraService {
+  id                   String                @id @default(cuid())
+  name                 String
+  price                Decimal               @db.Decimal(10, 2)
+  icon                 String?
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  bookingExtraServices BookingExtraService[]
+
+  @@map("extraservice")
+}
+
+model BookingExtraService {
+  id             String       @id @default(cuid())
+  bookingId      String
+  extraServiceId String
+  quantity       Int          @default(1)
+  priceAtBooking Decimal      @db.Decimal(10, 2)
+  booking        Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  extraService   ExtraService @relation(fields: [extraServiceId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([extraServiceId])
+  @@map("bookingextraservice")
+}
+
+model Inquiry {
+  id         String        @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  subject    String?
+  message    String        @db.Text
+  status     InquiryStatus @default(NEW)
+  adminReply String?       @db.Text
+  repliedAt  DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("inquiry")
+}
+
+enum InquiryStatus {
+  NEW
+  REPLIED
+  ARCHIVED
+}
+
+enum VoucherDiscountType {
+  PERCENT
+  FIXED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum BookingPaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  USER
 }

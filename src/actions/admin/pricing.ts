@@ -2,87 +2,73 @@
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { auth } from "@/lib/auth"; // Đảm bảo import đúng cấu hình auth của bạn
 
-const SeasonalPriceSchema = z.object({
-  courtId: z.string(),
-  startDate: z.date(),
-  endDate: z.date(),
-  price: z.coerce.number().min(0, "Giá không được âm"),
-});
-
-// Helper kiểm tra quyền Admin
-const checkAdmin = async () => {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized");
-  }
-};
-
-export const createSeasonalPrice = async (values: z.infer<typeof SeasonalPriceSchema>) => {
+export async function getSeasonalPrices(courtId: string) {
   try {
-    // 🛑 CHẶN QUYỀN: Chỉ Admin mới được thiết lập biểu giá
-    await checkAdmin();
+    const prices = await db.seasonalPrice.findMany({
+      where: { courtId },
+      orderBy: { startDate: "asc" }
+    });
+    return prices;
+  } catch (error) {
+    console.error("GET_SEASONAL_PRICES_ERROR", error);
+    return [];
+  }
+}
 
-    const validated = SeasonalPriceSchema.safeParse(values);
-    if (!validated.success) return { error: "Dữ liệu không hợp lệ!" };
-
-    const { courtId, startDate, endDate, price } = validated.data;
-
-    // 1. Validate Logic: Ngày bắt đầu phải trước ngày kết thúc
-    if (startDate >= endDate) {
-      return { error: "Ngày kết thúc phải sau ngày bắt đầu!" };
-    }
-
-    // 2. Validate Logic: Kiểm tra xem khoảng thời gian này đã có giá mùa vụ nào chưa?
-    const existingPrice = await db.seasonalPrice.findFirst({
+export async function addSeasonalPrice(data: {
+  courtId: string;
+  startDate: Date;
+  endDate: Date;
+  price: number;
+}) {
+  try {
+    // 1. Kiểm tra lồng chéo thời gian (Overlap)
+    const existing = await db.seasonalPrice.findFirst({
       where: {
-        courtId,
+        courtId: data.courtId,
         OR: [
           {
-            startDate: { lte: endDate },
-            endDate: { gte: startDate },
+            AND: [
+              { startDate: { lte: data.startDate } },
+              { endDate: { gte: data.startDate } }
+            ]
           },
-        ],
-      },
+          {
+            AND: [
+              { startDate: { lte: data.endDate } },
+              { endDate: { gte: data.endDate } }
+            ]
+          }
+        ]
+      }
     });
 
-    if (existingPrice) {
-      return { 
-        error: "Khoảng thời gian này bị trùng với một cài đặt giá khác!" 
-      };
+    if (existing) {
+      return { error: "Thời gian này đã có giá đặc biệt khác lồng chéo." };
     }
 
-    // 3. Tạo mới
     await db.seasonalPrice.create({
-      data: {
-        courtId,
-        startDate,
-        endDate,
-        price,
-      },
+      data
     });
 
-    revalidatePath(`/admin/rooms/${courtId}`);
-    return { success: "Đã thiết lập giá mùa vụ thành công!" };
-  } catch (error: any) {
-    if (error.message === "Unauthorized") return { error: "Bạn không có quyền thiết lập giá!" };
-    console.log("CREATE_SEASONAL_PRICE_ERROR", error);
-    return { error: "Lỗi Server!" };
+    revalidatePath("/admin/pricing");
+    return { success: "Đã thêm giá theo mùa thành công!" };
+  } catch (error) {
+    console.error("ADD_SEASONAL_PRICE_ERROR", error);
+    return { error: "Lỗi hệ thống khi thêm giá." };
   }
-};
+}
 
-export const deleteSeasonalPrice = async (id: string, courtId: string) => {
+export async function deleteSeasonalPrice(id: string) {
   try {
-    // 🛑 CHẶN QUYỀN: Chỉ Admin mới được xóa biểu giá
-    await checkAdmin();
-
-    await db.seasonalPrice.delete({ where: { id } });
-    revalidatePath(`/admin/rooms/${courtId}`);
-    return { success: "Đã xóa giá mùa vụ!" };
-  } catch (error: any) {
-    if (error.message === "Unauthorized") return { error: "Bạn không có quyền thực hiện hành động này!" };
-    return { error: "Lỗi Server!" };
+    await db.seasonalPrice.delete({
+      where: { id }
+    });
+    revalidatePath("/admin/pricing");
+    return { success: "Đã xóa giá theo mùa." };
+  } catch (error) {
+    console.error("DELETE_SEASONAL_PRICE_ERROR", error);
+    return { error: "Lỗi khi xóa giá." };
   }
-};
+}

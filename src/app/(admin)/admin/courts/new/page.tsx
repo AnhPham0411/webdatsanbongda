@@ -1,16 +1,21 @@
 import { db } from "@/lib/db";
-import { RoomForm } from "@/components/admin/room-form";
+import { CourtForm } from "@/components/admin/court-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
-export default async function NewRoomPage() {
-  const roomTypes = await db.roomType.findMany();
+export default async function NewCourtPage() {
+  const courtTypes = await db.courtType.findMany({
+    include: {
+      location: true,
+    }
+  });
 
   // 👇 Format dữ liệu: Convert Decimal -> Number
-  const formattedRoomTypes = roomTypes.map((type) => ({
+  const formattedCourtTypes = courtTypes.map((type) => ({
     ...type,
     basePrice: type.basePrice.toNumber(),
+    locationName: type.location?.name || "Chưa xác định",
   }));
 
   return (
@@ -18,7 +23,7 @@ export default async function NewRoomPage() {
       <div className="flex-1 space-y-4 p-8 pt-6">
          {/* Nút quay lại */}
          <div className="flex items-center gap-2 mb-2">
-            <Link href="/admin/rooms">
+            <Link href="/admin/courts">
                 <Button variant="ghost" size="sm" className="gap-1 pl-0 text-muted-foreground hover:text-foreground">
                     <ChevronLeft className="h-4 w-4" />
                     Quay lại danh sách
@@ -27,9 +32,9 @@ export default async function NewRoomPage() {
         </div>
 
         {/* Form chính (initialData = null) */}
-        <RoomForm 
+        <CourtForm 
             initialData={null} 
-            roomTypes={formattedRoomTypes} 
+            courtTypes={formattedCourtTypes} 
         />
       </div>
     </div>

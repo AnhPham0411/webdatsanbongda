@@ -129,7 +129,7 @@ export const ReviewCard = ({ review }: ReviewCardProps) => {
         
         <Badge variant="secondary" className="font-normal text-xs bg-slate-50 text-slate-600 border border-slate-200">
           <Activity className="h-3 w-3 mr-1" />
-          {review.booking.court.name}
+          {review.court?.name || review.booking?.court?.name || "N/A"}
         </Badge>
       </div>
 

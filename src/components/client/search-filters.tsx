@@ -29,6 +29,7 @@ interface SearchFiltersProps {
 type LocationOption = {
   id: string;
   name: string;
+  district?: string | null;
 };
 
 export const SearchFilters = ({ className, vertical = false }: SearchFiltersProps) => {
@@ -94,39 +95,71 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
   const triggerClass = cn(
     triggerHeight,
     "w-full rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-slate-100",
-    "px-4 py-3 transition-all flex items-start gap-4 text-left"
+    "px-3 py-3 transition-all flex items-start gap-2.5 text-left"
   );
-  const iconBoxClass = "mt-1 flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center";
-  const textClass = "flex-1 font-semibold text-slate-700 text-base leading-tight";
+  const iconBoxClass = "mt-1 flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center";
+  const textClass = "flex-1 font-semibold text-slate-700 text-[14px] leading-tight min-w-0 overflow-hidden";
 
   const FieldWrapper = ({ children }: { children: React.ReactNode }) =>
     vertical ? <div className="rounded-2xl border bg-white p-2 shadow-sm">{children}</div> : <>{children}</>;
+
+  const handleDistrictChange = (val: string) => {
+    setDistrict(val);
+    setLocationId(""); // Clear selected cluster when district changes
+  };
+
+  const isDistrictSelected = district && district !== "all";
+  const filteredLocations = isDistrictSelected 
+     ? locations.filter(loc => loc.district === district) 
+     : locations;
 
   return (
     <div
       className={cn(
         "w-full rounded-3xl bg-white transition-all",
-        vertical ? "flex flex-col gap-5 p-0" : "flex flex-col gap-4 p-3 lg:flex-row lg:items-center",
+        vertical ? "flex flex-col gap-5 p-0" : "grid grid-cols-1 gap-4 p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_80px] lg:items-stretch",
         className
       )}
     >
-      {/* 1. ĐỊA ĐIỂM CỤM SÂN */}
-      <div className="flex-1">
+      {/* 1. KHU VỰC (District) */}
+      <div className="w-full">
         <FieldWrapper>
-          <Select value={locationId} onValueChange={setLocationId}>
-            <SelectTrigger className={cn(triggerClass, "hover:border-emerald-400 focus:ring-emerald-100")}>
-              <div className={cn(iconBoxClass, "bg-emerald-100 text-emerald-600")}><MapPin className="h-6 w-6" /></div>
+          <Select value={district} onValueChange={handleDistrictChange}>
+            <SelectTrigger className={cn(triggerClass, "hover:border-orange-400 focus:ring-orange-100")}>
+              <div className={cn(iconBoxClass, "bg-orange-100 text-orange-600")}><Map className="h-5 w-5" /></div>
+              <div className={textClass}>
+                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Khu vực</span>
+                <SelectValue placeholder="Chọn khu vực" />
+              </div>
+            </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả khu vực</SelectItem>
+                <SelectItem value="Đống Đa">Đống Đa</SelectItem>
+                <SelectItem value="Cầu Giấy">Cầu Giấy</SelectItem>
+                <SelectItem value="Thanh Xuân">Thanh Xuân</SelectItem>
+                <SelectItem value="Hà Đông">Hà Đông</SelectItem>
+              </SelectContent>
+          </Select>
+        </FieldWrapper>
+      </div>
+
+      {/* 2. ĐỊA ĐIỂM CỤM SÂN */}
+      <div className="w-full">
+        <FieldWrapper>
+          <Select value={locationId} onValueChange={setLocationId} disabled={!isDistrictSelected}>
+            <SelectTrigger className={cn(triggerClass, "hover:border-emerald-400 focus:ring-emerald-100", !isDistrictSelected && "opacity-60 cursor-not-allowed")}>
+              <div className={cn(iconBoxClass, "bg-emerald-100 text-emerald-600")}><MapPin className="h-5 w-5" /></div>
               <div className={textClass}>
                 <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Cụm sân</span>
-                <SelectValue placeholder={isLoadingLocations ? "Đang tải..." : "Bạn muốn đá ở đâu?"} />
+                <SelectValue placeholder={!isDistrictSelected ? "Vui lòng chọn Khu vực trước" : (isLoadingLocations ? "Đang tải..." : "Bạn muốn đá ở đâu?")} />
               </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả cụm sân</SelectItem>
-              {locations.map((loc) => (
+              {filteredLocations.map((loc) => (
                 <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
               ))}
-              {!isLoadingLocations && locations.length === 0 && (
+              {!isLoadingLocations && filteredLocations.length === 0 && (
                  <div className="p-2 text-sm text-slate-500 text-center">Chưa có cụm sân nào</div>
               )}
             </SelectContent>
@@ -134,13 +167,13 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
         </FieldWrapper>
       </div>
 
-      {/* 2. NGÀY ĐÁ (Single Date) */}
-      <div className="flex-1">
+      {/* 3. NGÀY ĐÁ (Single Date) */}
+      <div className="w-full">
         <FieldWrapper>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn(triggerClass, "hover:border-rose-400 focus:ring-rose-100 justify-start")}>
-                <div className={cn(iconBoxClass, "bg-rose-100 text-rose-600")}><CalendarIcon className="h-6 w-6" /></div>
+                <div className={cn(iconBoxClass, "bg-rose-100 text-rose-600")}><CalendarIcon className="h-5 w-5" /></div>
                 <div className={textClass}>
                   <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Ngày đá</span>
                   {date ? (
@@ -166,12 +199,12 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
         </FieldWrapper>
       </div>
 
-      {/* 3. KHUNG GIỜ (Time Slot) */}
-      <div className="flex-1">
+      {/* 4. KHUNG GIỜ (Time Slot) */}
+      <div className="w-full">
         <FieldWrapper>
           <Select value={timeSlot} onValueChange={setTimeSlot}>
             <SelectTrigger className={cn(triggerClass, "hover:border-blue-400 focus:ring-blue-100")}>
-              <div className={cn(iconBoxClass, "bg-blue-100 text-blue-600")}><Clock className="h-6 w-6" /></div>
+              <div className={cn(iconBoxClass, "bg-blue-100 text-blue-600")}><Clock className="h-5 w-5" /></div>
               <div className={textClass}>
                 <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Khung giờ</span>
                 <SelectValue placeholder="Chọn ca đá" />
@@ -190,38 +223,19 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
         </FieldWrapper>
       </div>
 
-      {/* 4. KHU VỰC (District) */}
-      <div className="flex-1">
-        <FieldWrapper>
-          <Select value={district} onValueChange={setDistrict}>
-            <SelectTrigger className={cn(triggerClass, "hover:border-orange-400 focus:ring-orange-100")}>
-              <div className={cn(iconBoxClass, "bg-orange-100 text-orange-600")}><Map className="h-6 w-6" /></div>
-              <div className={textClass}>
-                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Khu vực</span>
-                <SelectValue placeholder="Chọn quận/huyện" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="dong_da">Quận Đống Đa</SelectItem>
-              <SelectItem value="cau_giay">Quận Cầu Giấy</SelectItem>
-              <SelectItem value="thanh_xuan">Quận Thanh Xuân</SelectItem>
-              <SelectItem value="ha_dong">Quận Hà Đông</SelectItem>
-            </SelectContent>
-          </Select>
-        </FieldWrapper>
-      </div>
-
       {/* 5. SEARCH BUTTON */}
-      <div className={cn(vertical ? "w-full pt-3" : "w-full lg:w-auto")}>
+      <div className="w-full">
         <Button
           onClick={onSearch}
           className={cn(
-            "h-[76px] w-full rounded-2xl bg-blue-600 text-lg font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all"
+            "h-[76px] w-full rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all flex items-center justify-center p-0"
           )}
+          title="Tìm sân"
         >
-          <Search className="mr-2 h-5 w-5" />
-          {vertical ? "Tìm kiếm ngay" : "Tìm sân"}
+          <Search className={cn("h-6 w-6", !vertical && "lg:m-0 mr-2")} />
+          <span className={cn(vertical ? "block text-lg" : "lg:hidden block text-lg")}>
+             {vertical ? "Tìm kiếm ngay" : "Tìm sân"}
+          </span>
         </Button>
       </div>
     </div>

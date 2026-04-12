@@ -17,6 +17,7 @@ const BookingSchema = z.object({
   totalPrice: z.number().min(0),
   voucherId: z.string().nullable().optional(),
   discountValue: z.number().optional(),
+  services: z.string().optional(),
 });
 
 export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
@@ -29,26 +30,37 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
     const userId = session.user.id;
     const userEmail = session.user.email;
 
+    const userExists = await db.user.findUnique({ where: { id: userId } });
+    if (!userExists) {
+      return { error: "Không tìm thấy người dùng trong hệ thống. Vui lòng đăng xuất và đăng nhập lại." };
+    }
+
     const validated = BookingSchema.safeParse(values);
     if (!validated.success) {
       return { error: validated.error.issues[0].message };
     }
 
-    const { courtId, date, timeSlotId, totalPrice, ...guestInfo } = validated.data;
+    const { courtId, date, timeSlotId, totalPrice, services, ...guestInfo } = validated.data;
     
-    // Deposit calculation
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (new Date(date) < today) {
+      return { error: "Không thể đặt lịch trong quá khứ" };
+    }
+    
     const depositAmount = totalPrice * 0.3;
 
     const result = await db.$transaction(async (tx) => {
-      // KIỂM TRA TRÙNG LỊCH (ANTI-RACE CONDITION)
+      const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
       const conflictingBooking = await tx.booking.findFirst({
         where: {
           courtId,
           date,
           timeSlotId,
-          status: { 
-            in: ["PENDING", "CONFIRMED"] 
-          },
+          OR: [
+            { status: "CONFIRMED" },
+            { status: "PENDING", createdAt: { gt: tenMinsAgo } }
+          ]
         },
       });
 
@@ -72,6 +84,26 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
           court: true
         }
       });
+      
+      if (services) {
+        const selectedServices = JSON.parse(services);
+        for (const [serviceId, quantity] of Object.entries(selectedServices)) {
+          const service = await tx.extraService.findUnique({
+            where: { id: serviceId }
+          });
+          
+          if (service) {
+            await tx.bookingExtraService.create({
+              data: {
+                bookingId: booking.id,
+                extraServiceId: service.id,
+                quantity: quantity as number,
+                priceAtBooking: service.price,
+              }
+            });
+          }
+        }
+      }
 
       await tx.payment.create({
         data: {
@@ -86,7 +118,7 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
       return { 
         success: true, 
         bookingId: booking.id, 
-        courtName: booking.court.name 
+        courtName: booking.court?.name || "Sân bóng"
       };
     });
 
@@ -97,9 +129,9 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
       }).format(totalPrice);
 
       sendBookingConfirmationEmail(userEmail, {
-        roomName: result.courtName, 
-        checkIn: date.toLocaleDateString("vi-VN"),
-        checkOut: date.toLocaleDateString("vi-VN"), 
+        courtName: result.courtName, 
+        receivedDate: date.toLocaleDateString("vi-VN"),
+        returnedDate: date.toLocaleDateString("vi-VN"), 
         totalPrice: formattedPrice,
       }).catch((err) => console.error("MAIL_ERROR:", err));
     }
@@ -121,9 +153,9 @@ export const cancelBooking = async (bookingId: string) => {
     const session = await auth();
     if (!session?.user?.id) return { error: "Bạn chưa đăng nhập!" };
 
-    // Use findFirst since unique is ID
     const booking = await db.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: { timeSlot: true }
     });
 
     if (!booking) return { error: "Không tìm thấy đơn đặt sân!" };
@@ -139,6 +171,16 @@ export const cancelBooking = async (bookingId: string) => {
       return { error: "Không thể hủy đơn đã hoàn thành hoặc đã hủy trước đó." };
     }
 
+    if (booking.timeSlot) {
+      const matchStart = new Date(booking.date);
+      const timeStart = new Date(booking.timeSlot.startTime);
+      matchStart.setHours(timeStart.getUTCHours(), timeStart.getUTCMinutes(), 0, 0); 
+      
+      if (matchStart.getTime() - Date.now() < 6 * 60 * 60 * 1000) {
+         return { error: "Chỉ được phép hủy sân trước giờ đá 6 tiếng. Vui lòng liên hệ hotline để được hỗ trợ." };
+      }
+    }
+
     await db.booking.update({
       where: { id: bookingId },
       data: { status: "CANCELLED" }
@@ -152,5 +194,91 @@ export const cancelBooking = async (bookingId: string) => {
   } catch (error) {
     console.error("CANCEL_ERROR:", error);
     return { error: "Lỗi hệ thống khi hủy đơn!" };
+  }
+};
+
+export const getAvailableTimeSlots = async (courtId: string, dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+    const timeSlots = await db.timeSlot.findMany({
+      orderBy: { startTime: 'asc' }
+    });
+
+    const bookings = await db.booking.findMany({
+      where: {
+        courtId,
+        date,
+        status: { in: ["PENDING", "CONFIRMED"] }
+      }
+    });
+
+    return timeSlots.map(slot => {
+       const b = bookings.find(b => b.timeSlotId === slot.id);
+       let status: "available" | "booked" | "pending" = "available";
+       
+       if (b) {
+         if (b.status === "CONFIRMED") {
+           status = "booked";
+         } else if (b.status === "PENDING") {
+           if (new Date(b.createdAt) > tenMinsAgo) {
+              status = "pending";
+           }
+         }
+       }
+       
+       const sTime = new Date(slot.startTime);
+       const eTime = new Date(slot.endTime);
+       
+       return {
+         id: slot.id,
+         startTime: `${sTime.getUTCHours().toString().padStart(2,'0')}:${sTime.getUTCMinutes().toString().padStart(2,'0')}`,
+         endTime: `${eTime.getUTCHours().toString().padStart(2,'0')}:${eTime.getUTCMinutes().toString().padStart(2,'0')}`,
+         status
+       };
+    });
+  } catch (error) {
+    console.error("GET_TIME_SLOTS_ERROR", error);
+    return [];
+  }
+};
+
+export const deleteUserBooking = async (bookingId: string) => {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { error: "Bạn chưa đăng nhập!" };
+
+    const booking = await db.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) return { error: "Không tìm thấy đơn đặt sân!" };
+
+    if (booking.userId !== session.user.id && session.user.role !== "ADMIN") {
+      return { error: "Bạn không có quyền thực hiện hành động này!" };
+    }
+
+    // Chỉ cho phép xóa nếu đã xong hoặc đã hủy
+    if (!["CHECKED_OUT", "CANCELLED"].includes(booking.status)) {
+      return { error: "Chỉ có thể xóa các đơn đã hoàn thành hoặc đã hủy." };
+    }
+
+    await db.$transaction(async (tx) => {
+      // Xóa các bảng liên quan (nếu schema chưa có cascade hoàn chỉnh)
+      await tx.payment.deleteMany({ where: { bookingId } });
+      await tx.review.deleteMany({ where: { bookingId } });
+      await tx.bookingExtraService.deleteMany({ where: { bookingId } });
+      
+      await tx.booking.delete({ where: { id: bookingId } });
+    });
+
+    revalidatePath("/my-bookings");
+    revalidatePath("/admin/bookings");
+    
+    return { success: "Đã xóa lịch sử đặt sân!" };
+  } catch (error) {
+    console.error("DELETE_USER_BOOKING_ERROR:", error);
+    return { error: "Lỗi hệ thống khi xóa lịch sử!" };
   }
 };

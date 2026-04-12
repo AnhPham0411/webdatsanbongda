@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { toast } from "sonner";
 import { Loader2, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
@@ -26,6 +27,7 @@ export const UserRoleSelect = ({
   defaultValue, 
   isCurrentUser 
 }: UserRoleSelectProps) => {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [role, setRole] = useState(defaultValue);
 
@@ -38,6 +40,7 @@ export const UserRoleSelect = ({
         setRole(defaultValue); // Revert nếu lỗi
       } else {
         toast.success(result.success);
+        router.refresh();
       }
     });
   };

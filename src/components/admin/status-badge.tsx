@@ -1,5 +1,4 @@
-import { BookingStatus, PaymentStatus } from "@prisma/client";
-import { Badge } from "@/components/ui/badge"; // Giả định đã cài Shadcn Badge
+import { Badge } from "@/components/ui/badge";
 
 interface StatusBadgeProps {
   status: string | boolean;
@@ -9,12 +8,11 @@ interface StatusBadgeProps {
 export const StatusBadge = ({ status, type }: StatusBadgeProps) => {
   const getStyle = (s: string) => {
     switch (s) {
-      // Booking & Payment
       case "CONFIRMED":
       case "CHECKED_IN":
       case "PAID":
       case "ACTIVE":
-      case "TRUE": // for boolean available
+      case "TRUE": 
         return "bg-green-500 hover:bg-green-600";
       
       case "PENDING":
@@ -26,7 +24,7 @@ export const StatusBadge = ({ status, type }: StatusBadgeProps) => {
         
       case "CANCELLED":
       case "REFUNDED":
-      case "FALSE": // for boolean unavailable
+      case "FALSE": 
         return "bg-red-500 hover:bg-red-600";
         
       default:
@@ -42,8 +40,8 @@ export const StatusBadge = ({ status, type }: StatusBadgeProps) => {
     const map: Record<string, string> = {
       PENDING: "Chờ xác nhận",
       CONFIRMED: "Đã xác nhận",
-      CHECKED_IN: "Đang ở",
-      CHECKED_OUT: "Đã trả phòng",
+      CHECKED_IN: "Đã nhận sân",
+      CHECKED_OUT: "Đã trả sân",
       CANCELLED: "Đã hủy",
       UNPAID: "Chưa thanh toán",
       PAID: "Đã thanh toán",

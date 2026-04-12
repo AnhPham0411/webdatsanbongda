@@ -4,17 +4,17 @@ import { useState, useTransition } from "react";
 import { Star, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { createReview } from "@/actions/client/reviews"; // Server Action bạn đã có
+import Link from "next/link";
+import { createReview } from "@/actions/client/reviews";
 
 interface ReviewFormProps {
-  roomId: string;
-  currentUser: any; // Thông tin user từ session
+  courtId: string;
+  currentUser?: any; 
 }
 
-export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
+export const ReviewForm = ({ courtId, currentUser }: ReviewFormProps) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -25,7 +25,7 @@ export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
   if (!currentUser) {
     return (
       <div className="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-8 text-center mb-8">
-        <h4 className="text-lg font-semibold text-slate-800 mb-2">Bạn đã từng nghỉ tại đây?</h4>
+        <h4 className="text-lg font-semibold text-slate-800 mb-2">Bạn đã từng chơi bóng tại đây?</h4>
         <p className="text-slate-500 mb-4 text-sm">Vui lòng đăng nhập để chia sẻ trải nghiệm của bạn.</p>
         <Link href="/auth/login">
             <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
@@ -44,7 +44,7 @@ export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
     }
 
     startTransition(async () => {
-      const res = await createReview(roomId, rating, comment);
+      const res = await createReview(courtId, rating, comment);
       
       if (res.error) {
         toast.error(res.error);
@@ -64,9 +64,8 @@ export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
   return (
     <div className="bg-white border rounded-2xl p-6 shadow-sm mb-10">
       <h3 className="text-lg font-bold text-gray-900 mb-1">Viết đánh giá mới</h3>
-      <p className="text-sm text-gray-500 mb-4">Chia sẻ cảm nhận chân thực của bạn về phòng nghỉ này.</p>
+      <p className="text-sm text-gray-500 mb-4">Chia sẻ cảm nhận của bạn về chất lượng sân và dịch vụ tại đây.</p>
       
-      {/* Chọn Sao */}
       <div className="flex items-center gap-2 mb-4">
         <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -94,10 +93,9 @@ export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
         </span>
       </div>
 
-      {/* Nhập nội dung */}
       <div className="space-y-4">
         <Textarea
-            placeholder="Phòng ốc thế nào? Dịch vụ ra sao? Hãy kể cho mọi người nghe..."
+            placeholder="Chất lượng cỏ thế nào? Đèn chiếu sáng và dịch vụ ra sao? Hãy chia sẻ cho mọi người cùng biết..."
             className="min-h-[100px] text-base resize-none focus-visible:ring-primary"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -122,6 +120,3 @@ export const ReviewForm = ({ roomId, currentUser }: ReviewFormProps) => {
     </div>
   );
 };
-
-// Helper component Link (để tránh lỗi import nếu bạn chưa import)
-import Link from "next/link";

@@ -8,6 +8,7 @@ export default async function ReviewsPage() {
     include: {
       user: true,
       booking: { include: { court: true } },
+      court: true,
     },
     orderBy: { createdAt: "desc" },
   });

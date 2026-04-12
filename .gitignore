@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# temporary and irrelevant files
+out.txt
+seed_output.log
+CodeBase.txt
+/tmp/

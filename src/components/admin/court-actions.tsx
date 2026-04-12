@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash, Power, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { deleteCourt } from "@/actions/admin/courts";
+import { deleteCourt, toggleCourtAvailability } from "@/actions/admin/courts";
 
 import {
   DropdownMenu,
@@ -27,9 +27,10 @@ import {
 
 interface CourtActionsProps {
   id: string;
+  isAvailable: boolean;
 }
 
-export const CourtActions = ({ id }: CourtActionsProps) => {
+export const CourtActions = ({ id, isAvailable }: CourtActionsProps) => {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -48,6 +49,19 @@ export const CourtActions = ({ id }: CourtActionsProps) => {
     });
   };
 
+  const onToggle = () => {
+    startTransition(() => {
+      toggleCourtAvailability(id, isAvailable)
+        .then((data) => {
+          if (data.error) toast.error(data.error);
+          if (data.success) {
+            toast.success(data.success);
+            router.refresh();
+          }
+        });
+    });
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -58,11 +72,22 @@ export const CourtActions = ({ id }: CourtActionsProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`/admin/rooms/${id}`}>
+          <Link href={`/admin/courts/${id}`}>
             <DropdownMenuItem className="cursor-pointer">
               <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
             </DropdownMenuItem>
           </Link>
+          <DropdownMenuItem 
+            className="cursor-pointer"
+            disabled={isPending}
+            onClick={onToggle}
+          >
+            {isAvailable ? (
+                <><EyeOff className="mr-2 h-4 w-4" /> Tắt sẵn sàng</>
+            ) : (
+                <><Eye className="mr-2 h-4 w-4" /> Bật sẵn sàng</>
+            )}
+          </DropdownMenuItem>
           <DropdownMenuItem 
             className="text-red-600 cursor-pointer focus:text-red-600"
             onClick={() => setOpen(true)}

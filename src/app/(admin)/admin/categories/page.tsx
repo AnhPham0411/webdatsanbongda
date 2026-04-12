@@ -6,6 +6,7 @@ import { DeleteCategoryButton } from "@/components/admin/delete-category-button"
 import { Badge } from "@/components/ui/badge";
 
 export default async function CategoriesPage() {
+  // Standardized PascalCase model name: CourtType
   const categories = await db.courtType.findMany({
     include: { 
         _count: { select: { courts: true } },
@@ -21,14 +22,14 @@ export default async function CategoriesPage() {
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Loại sân (Hạng sân)</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Hệ thống sân</h2>
           <p className="text-muted-foreground">
-            Thiết lập các loại sân cho từng cụm sân trong hệ thống Sport Arena.
+            Quản lý và thiết lập các hạng sân trong hệ thống Sport Arena.
           </p>
         </div>
         <Link href="/admin/categories/new">
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> Thêm loại sân
+            <Plus className="mr-2 h-4 w-4" /> Thêm hạng sân mới
           </Button>
         </Link>
       </div>
@@ -39,9 +40,9 @@ export default async function CategoriesPage() {
                <Activity className="h-10 w-10 text-slate-400" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900">Chưa có dữ liệu</h3>
-            <p className="text-muted-foreground mb-4">Bạn chưa tạo loại sân nào.</p>
+            <p className="text-muted-foreground mb-4">Bạn chưa tạo hạng sân nào trong hệ thống.</p>
             <Link href="/admin/categories/new">
-              <Button variant="outline">Tạo loại sân đầu tiên</Button>
+              <Button variant="outline">Tạo hạng sân đầu tiên</Button>
             </Link>
          </div>
       ) : (

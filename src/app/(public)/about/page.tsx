@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -37,11 +38,12 @@ export default function AboutPage() {
           </div>
           
           {/* Ảnh minh họa: Football Field */}
-          <div className="relative overflow-hidden rounded-2xl shadow-2xl shadow-sky-100">
-            <img 
-              src="https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=1920" 
+          <div className="relative h-[400px] overflow-hidden rounded-2xl shadow-2xl shadow-sky-100">
+            <Image 
+              src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200" 
               alt="High quality football field" 
-              className="w-full h-full object-cover transform hover:scale-105 transition duration-700"
+              fill
+              className="object-cover transform hover:scale-105 transition duration-700"
             />
           </div>
         </div>
@@ -164,10 +166,11 @@ export default function AboutPage() {
       <section className="container mx-auto px-4 py-20">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative h-72 md:h-[450px] rounded-3xl overflow-hidden shadow-2xl shadow-sky-500/10 order-2 md:order-1 border-4 border-white">
-             <img 
-              src="/images/about/team.png" 
+             <Image 
+              src="https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=1200" 
               alt="Our Management Team" 
-              className="w-full h-full object-cover hover:scale-105 transition duration-1000 ease-out"
+              fill
+              className="object-cover hover:scale-105 transition duration-1000 ease-out"
             />
             {/* Soft Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent pointer-events-none"></div>

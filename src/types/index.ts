@@ -1,12 +1,12 @@
-import { Room, RoomImage, RoomType, Amenity } from "@prisma/client";
+import { Court, CourtImage, CourtType, Amenity } from "@prisma/client";
 
-// SafeRoom: Loại bỏ các trường không tồn tại hoặc không an toàn
-export type SafeRoom = Omit<Room, "createdAt"> & {
+// SafeCourt: Loại bỏ các trường không tồn tại hoặc không an toàn
+export type SafeCourt = Omit<Court, "createdAt"> & {
   createdAt: string;
-  // updatedAt: string;  <-- XÓA DÒNG NÀY (Vì bảng Room không có cột này)
-  roomType: Omit<RoomType, "basePrice"> & {
+  courtType: Omit<CourtType, "basePrice"> & {
     basePrice: number;
     amenities: Amenity[];
   };
-  images: RoomImage[];
+  images: CourtImage[];
+  reviews?: any[];
 };

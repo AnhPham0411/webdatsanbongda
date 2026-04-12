@@ -11,6 +11,7 @@ export const getLocations = async () => {
       select: {
         id: true,
         name: true,
+        district: true,
       }
     });
     return locations;

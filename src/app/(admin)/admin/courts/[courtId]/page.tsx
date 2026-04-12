@@ -1,45 +1,50 @@
 import { db } from "@/lib/db";
-import { RoomForm } from "@/components/admin/room-form";
+import { CourtForm } from "@/components/admin/court-form";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 // 1. Định nghĩa kiểu Props cho Next.js 15+
-interface RoomIdPageProps {
+interface CourtIdPageProps {
   params: Promise<{
-    roomId: string;
+    courtId: string;
   }>;
 }
 
-export default async function RoomIdPage(props: RoomIdPageProps) {
+export default async function CourtIdPage(props: CourtIdPageProps) {
   // 2. Await params trước khi sử dụng
   const params = await props.params;
-  const { roomId } = params;
+  const { courtId } = params;
 
-  // Kiểm tra nếu roomId không hợp lệ (đề phòng)
-  if (!roomId) {
-    return redirect("/admin/rooms");
+  // Kiểm tra nếu courtId không hợp lệ (đề phòng)
+  if (!courtId) {
+    return redirect("/admin/courts");
   }
 
   // 3. Fetch dữ liệu
-  const [room, roomTypes] = await Promise.all([
-    db.room.findUnique({
-      where: { id: roomId }, // Sử dụng biến roomId đã await
+  const [court, courtTypes] = await Promise.all([
+    db.court.findUnique({
+      where: { id: courtId }, 
       include: { images: true }
     }),
-    db.roomType.findMany()
+    db.courtType.findMany({
+      include: {
+        location: true,
+      }
+    })
   ]);
 
-  // Nếu không tìm thấy phòng -> Quay về danh sách
-  if (!room) {
-    return redirect("/admin/rooms");
+  // Nếu không tìm thấy sân -> Quay về danh sách
+  if (!court) {
+    return redirect("/admin/courts");
   }
 
   // 4. Convert Decimal -> Number
-  const formattedRoomTypes = roomTypes.map((type) => ({
+  const formattedCourtTypes = courtTypes.map((type) => ({
     ...type,
     basePrice: type.basePrice.toNumber(),
+    locationName: type.location?.name || "Chưa xác định",
   }));
 
   return (
@@ -47,7 +52,7 @@ export default async function RoomIdPage(props: RoomIdPageProps) {
       <div className="flex-1 space-y-4 p-8 pt-6">
         {/* Nút quay lại */}
         <div className="flex items-center gap-2 mb-2">
-            <Link href="/admin/rooms">
+            <Link href="/admin/courts">
                 <Button variant="ghost" size="sm" className="gap-1 pl-0 text-muted-foreground hover:text-foreground">
                     <ChevronLeft className="h-4 w-4" />
                     Quay lại danh sách
@@ -56,9 +61,9 @@ export default async function RoomIdPage(props: RoomIdPageProps) {
         </div>
 
         {/* Form chính */}
-        <RoomForm 
-            initialData={room} 
-            roomTypes={formattedRoomTypes} 
+        <CourtForm 
+            initialData={court} 
+            courtTypes={formattedCourtTypes} 
         />
       </div>
     </div>

@@ -1,11 +1,13 @@
 import { auth } from "@/lib/auth";
-import { getRoomById } from "@/actions/client/get-rooms";
+import { db } from "@/lib/db";
+import { getCourtById } from "@/actions/client/get-courts";
+import { getExtraServices } from "@/actions/client/get-services";
 import { notFound, redirect } from "next/navigation";
-import Image from "next/image";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, Users, Clock } from "lucide-react";
+import { MapPin, Calendar, Users, Clock, Receipt } from "lucide-react";
 import { CheckoutForm } from "@/components/client/checkout-form";
+import { formatCurrency } from "@/lib/utils";
 
 interface CheckoutPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -25,12 +27,22 @@ export default async function CheckoutPage(props: CheckoutPageProps) {
   const courtId = (searchParams.courtId || searchParams.roomId) as string;
   const dateStr = (searchParams.date || searchParams.checkIn) as string;
   const timeSlotIdStr = searchParams.timeSlotId as string;
+  const servicesStr = searchParams.services as string;
   
   if (!courtId || !dateStr || !timeSlotIdStr) return notFound();
 
-  // Vẫn dùng getRoomById tạm vì file API giữ nguyên tên để không break các view khác
-  const court = await getRoomById(courtId);
+  // Sử dụng getCourtById từ get-courts.ts
+  const court = await getCourtById(courtId);
   if (!court) return notFound();
+
+  // Lấy thông tin khung giờ (TimeSlot) từ DB để hiển thị giờ thay vì ID
+  const timeSlot = await db.timeSlot.findUnique({
+    where: { id: timeSlotIdStr }
+  });
+
+  const timeDisplay = timeSlot 
+    ? `${format(timeSlot.startTime, "HH:mm")} - ${format(timeSlot.endTime, "HH:mm")}`
+    : timeSlotIdStr;
 
   // 2. Chuyển đổi chuỗi ngày tháng sang đối tượng Date
   const bookingDate = new Date(dateStr);
@@ -45,12 +57,24 @@ export default async function CheckoutPage(props: CheckoutPageProps) {
     );
   }
 
-  // 4. Tính giá sân (1 ca = giá gốc)
-  const basePrice = Number(court.roomType.basePrice); 
-  const totalPrice = basePrice; // 1 ca đá tương đương 1 đơn vị giá
+  // 4. Tính giá sân và dịch vụ
+  const basePrice = Number(court.courtType.basePrice); 
+  
+  // Xử lý dịch vụ thêm
+  const allServices = await getExtraServices();
+  const selectedServicesMap = servicesStr ? JSON.parse(servicesStr) : {};
+  const selectedServicesDetails = allServices
+    .filter((s: any) => selectedServicesMap[s.id])
+    .map((s: any) => ({
+      ...s,
+      quantity: selectedServicesMap[s.id]
+    }));
+  
+  const servicesTotal = selectedServicesDetails.reduce((acc: number, s: any) => acc + (s.price * s.quantity), 0);
+  const grandTotal = basePrice + servicesTotal;
 
   // Kiểm tra lần cuối
-  if (isNaN(totalPrice)) {
+  if (isNaN(grandTotal)) {
     return (
       <div className="container mx-auto py-20 text-center">
         <h2 className="text-xl font-bold text-red-600">Lỗi tính toán giá tiền!</h2>
@@ -66,26 +90,21 @@ export default async function CheckoutPage(props: CheckoutPageProps) {
         {/* Cột Trái: Thông tin sân bóng */}
         <div className="lg:col-span-1 space-y-6">
           <Card className="overflow-hidden border-none shadow-md">
-            <div className="relative h-56 w-full">
-              <Image
-                src={(court as any).images?.[0]?.url || "/images/placeholder.jpg"}
-                alt={court.name || "Court"}
-                fill
-                className="object-cover"
-              />
-            </div>
+            {/* Header placeholder (Simplified) */}
+            <div className="h-4 bg-blue-600 w-full" />
+
             <CardHeader>
               <CardTitle className="text-xl">{court.name}</CardTitle>
-              <p className="text-sm text-muted-foreground font-medium">{court.roomType.name}</p>
+              <p className="text-sm text-muted-foreground font-medium">{court.courtType.name}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center text-sm text-slate-600">
                 <MapPin className="w-4 h-4 mr-2 text-blue-500" />
-                <span>{court.roomType.location?.name || "Hà Nội"}</span>
+                <span>{court.courtType.location?.name || "Hà Nội"}</span>
               </div>
               <div className="flex items-center text-sm text-slate-600">
                 <Users className="w-4 h-4 mr-2 text-blue-500" />
-                <span>Số lượng người chơi: {court.roomType.capacity} người</span>
+                <span>Số lượng người chơi: {court.courtType.capacity} người</span>
               </div>
               
               <div className="bg-slate-100 p-4 rounded-lg space-y-3 mt-4">
@@ -95,11 +114,30 @@ export default async function CheckoutPage(props: CheckoutPageProps) {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2"><Clock className="w-4 h-4"/> Khung giờ:</span>
-                  <span className="font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">{timeSlotIdStr}</span>
+                  <span className="font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">{timeDisplay}</span>
                 </div>
                 <div className="border-t border-slate-300 pt-2 flex justify-between font-medium">
-                  <span>Thời lượng:</span>
-                  <span>1 ca</span>
+                  <span>Giá sân (1 ca):</span>
+                  <span>{formatCurrency(basePrice)}</span>
+                </div>
+
+                {selectedServicesDetails.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-slate-200">
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Dịch vụ kèm theo:</p>
+                    {selectedServicesDetails.map((service: any) => (
+                      <div key={service.id} className="flex justify-between text-sm">
+                        <span className="text-slate-600">{service.name} x {service.quantity}</span>
+                        <span className="font-medium">{formatCurrency(service.price * service.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="border-t border-slate-300 pt-3 flex justify-between items-center text-blue-700">
+                  <span className="font-bold flex items-center gap-1">
+                    <Receipt className="w-4 h-4"/> Tổng thanh toán:
+                  </span>
+                  <span className="text-lg font-bold">{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
             </CardContent>
@@ -118,7 +156,8 @@ export default async function CheckoutPage(props: CheckoutPageProps) {
                 courtId={courtId}
                 date={dateStr}
                 timeSlotId={timeSlotIdStr}
-                totalPrice={totalPrice} 
+                totalPrice={grandTotal} 
+                services={servicesStr}
                 initialName={session.user.name || ""}
                 initialEmail={session.user.email || ""}
                 initialPhone={(session.user as any).phone || ""}

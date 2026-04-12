@@ -1,17 +1,24 @@
+/**
+ * @file court-form.tsx
+ * @description Thành phần Form dùng để tạo mới hoặc cập nhật thông tin sân bóng.
+ * Sử dụng React Hook Form kết hợp với Zod để validation dữ liệu.
+ * Hỗ trợ tải lên hình ảnh lên server cục bộ hoặc dùng URL từ bên ngoài.
+ */
 "use client";
 
 import * as z from "zod";
 import { useState, useTransition, useRef } from "react"; // Thêm useRef
-import { useForm, useFieldArray } from "react-hook-form"; // Dùng lại useFieldArray
+import { useForm, useFieldArray, SubmitHandler } from "react-hook-form"; // Dùng lại useFieldArray
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Room, RoomImage } from "@prisma/client"; 
+import { Court, CourtImage } from "@prisma/client"; 
 import { Trash, Loader2, Plus, X, MapPin, ImagePlus, Upload } from "lucide-react"; // Thêm icon
 import { toast } from "sonner";
 
-import { createRoom, updateRoom, deleteRoom } from "@/actions/admin/rooms";
+import { createCourt, updateCourt, deleteCourt } from "@/actions/admin/courts";
 // Import Server Action upload local
 import { uploadImageLocal } from "@/actions/admin/upload"; 
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,104 +43,128 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
+/**
+ * Schema định nghĩa cấu trúc dữ liệu và quy tắc validation cho form.
+ * Sử dụng thư viện Zod.
+ */
 const formSchema = z.object({
-  name: z.string().min(1, "Tên phòng là bắt buộc"),
-  roomTypeId: z.string().min(1, "Vui lòng chọn loại phòng"),
-  isAvailable: z.boolean().default(true),
-  images: z.object({ url: z.string().min(1, "Link ảnh không được để trống") }).array(),
+  name: z.string().min(1, "Tên sân là bắt buộc"),
+  courtTypeId: z.string().min(1, "Vui lòng chọn hạng sân"),
+  isAvailable: z.boolean(),
+  images: z.array(z.object({
+    url: z.string().min(1, "Link ảnh không được để trống")
+  })),
 });
 
-type RoomFormValues = z.infer<typeof formSchema>;
+type CourtFormValues = z.infer<typeof formSchema>;
 
-interface RoomFormProps {
-  initialData: (Room & { images: RoomImage[] }) | null;
-  roomTypes: {
+interface CourtFormProps {
+  initialData: (Court & { images: CourtImage[] }) | null;
+  courtTypes: {
     id: string;
     name: string;
-    hotelName: string;
+    locationName: string;
     basePrice: number;
     capacity: number;
   }[];
 }
 
-export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
+/**
+ * Component chính cho form quản lý sân bóng.
+ */
+export const CourtForm = ({ initialData, courtTypes }: CourtFormProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false); // State loading riêng cho upload
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref để kích hoạt input file ẩn
 
-  const title = initialData ? "Chỉnh sửa phòng" : "Tạo phòng mới";
+  const title = initialData ? "Chỉnh sửa sân" : "Tạo sân mới";
   const action = initialData ? "Lưu thay đổi" : "Tạo mới";
 
-  const form = useForm<RoomFormValues>({
+  // Khởi tạo form với các giá trị mặc định dựa trên initialData (nếu có)
+  const form = useForm<CourtFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
-      ...initialData,
-      images: initialData.images || [], 
+      name: initialData.name,
+      courtTypeId: initialData.courtTypeId,
+      isAvailable: !!initialData.isAvailable,
+      images: initialData.images.map(img => ({ url: img.url })),
     } : {
       name: "",
-      roomTypeId: "",
+      courtTypeId: "",
       isAvailable: true,
       images: [],
     },
   });
 
-  // Quản lý mảng images
+  /**
+   * Quản lý mảng dynamic (danh sách ảnh).
+   * Cho phép thêm/xóa ảnh linh hoạt.
+   */
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "images",
   });
 
-  // --- XỬ LÝ UPLOAD LOCAL ---
+  /**
+   * Xử lý tải ảnh lên server cục bộ.
+   * Chuyển đổi file thành FormData và gửi qua Server Action uploadImageLocal.
+   */
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     
-    // Duyệt qua từng file được chọn (hỗ trợ chọn nhiều ảnh 1 lúc)
+    // Duyệt qua từng file được chọn (hỗ trợ chọn nhiều ảnh cùng lúc)
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const formData = new FormData();
         formData.append("file", file);
 
-        // Gọi Server Action
+        // Gọi Server Action để lưu file vào thư mục public/uploads
         const res = await uploadImageLocal(formData);
 
         if (res.error) {
             toast.error(`Lỗi upload ảnh ${file.name}: ${res.error}`);
         } else if (res.success) {
-            // ✅ Upload thành công -> Thêm URL vào danh sách form
+            // ✅ Upload thành công -> Thêm đường dẫn file vào danh sách ảnh của form
             append({ url: res.success });
             toast.success(`Đã tải lên: ${file.name}`);
         }
     }
 
     setIsUploading(false);
-    // Reset input để chọn lại được file cũ nếu muốn
+    // Reset giá trị input file để có thể chọn lại file cùng tên nếu cần
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
   };
 
-  const onSubmit = (data: RoomFormValues) => {
+  /**
+   * Xử lý gửi form (Submit).
+   * Phân biệt giữa tạo mới và cập nhật sân dựa trên presence của initialData.
+   */
+  const onSubmit = async (data: CourtFormValues) => {
     startTransition(() => {
       if (initialData) {
-        updateRoom(initialData.id, data).then((res) => {
+        // Cập nhật sân hiện tại
+        updateCourt(initialData.id, data).then((res) => {
           if (res.error) toast.error(res.error);
           if (res.success) {
             toast.success(res.success);
             router.refresh();
-            router.push(`/admin/rooms`);
+            router.push(`/admin/courts`);
           }
         });
       } else {
-        createRoom(data).then((res) => {
+        // Tạo sân mới
+        createCourt(data).then((res) => {
           if (res.error) toast.error(res.error);
           if (res.success) {
             toast.success(res.success);
             router.refresh();
-            router.push(`/admin/rooms`);
+            router.push(`/admin/courts`);
           }
         });
       }
@@ -143,12 +174,12 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
   const onDelete = () => {
     if (!initialData) return;
     startTransition(() => {
-        deleteRoom(initialData.id).then((res) => {
+        deleteCourt(initialData.id).then((res) => {
            if (res.error) toast.error(res.error);
            if (res.success) {
-              toast.success("Đã xóa phòng");
+              toast.success("Đã xóa sân");
               router.refresh();
-              router.push("/admin/rooms");
+              router.push("/admin/courts");
            }
         });
     });
@@ -157,12 +188,12 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
   const formatVND = (price: number) => 
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-  const groupedTypes = roomTypes.reduce((acc, type) => {
-    const hotel = type.hotelName || "Khác";
-    if (!acc[hotel]) acc[hotel] = [];
-    acc[hotel].push(type);
+  const groupedTypes = courtTypes.reduce((acc, type) => {
+    const location = type.locationName || "Khác";
+    if (!acc[location]) acc[location] = [];
+    acc[location].push(type);
     return acc;
-  }, {} as Record<string, typeof roomTypes>);
+  }, {} as Record<string, typeof courtTypes>);
 
   return (
     <>
@@ -170,7 +201,7 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
         <div className="space-y-1">
           <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
           <p className="text-sm text-muted-foreground">
-             {initialData ? "Cập nhật thông tin phòng." : "Thêm phòng mới vào hệ thống."}
+             {initialData ? "Cập nhật thông tin sân." : "Thêm sân mới vào hệ thống."}
           </p>
         </div>
         {initialData && (
@@ -192,7 +223,7 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
           {/* --- PHẦN HÌNH ẢNH (HYBRID: URL + UPLOAD) --- */}
           <div className="space-y-4">
              <div className="flex items-center justify-between">
-                <FormLabel className="text-lg font-semibold">Hình ảnh phòng</FormLabel>
+                <FormLabel className="text-lg font-semibold">Hình ảnh sân bóng</FormLabel>
                 {/* Input File Ẩn */}
                 <input 
                     type="file" 
@@ -220,9 +251,13 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
                                             <Input {...field} disabled={isPending} placeholder="https://... hoặc /uploads/..." />
                                             {/* Preview ảnh nhỏ nếu link hợp lệ */}
                                             {field.value && (
-                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden border">
-                                                    <img src={field.value} alt="Preview" className="w-full h-full object-cover" 
-                                                        onError={(e) => e.currentTarget.style.display = 'none'} 
+                                                <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded overflow-hidden border relative">
+                                                    <Image 
+                                                        src={field.value} 
+                                                        alt="Preview" 
+                                                        fill
+                                                        className="object-cover" 
+                                                        unoptimized
                                                     />
                                                 </div>
                                             )}
@@ -281,9 +316,9 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên phòng (Số phòng)</FormLabel>
+                  <FormLabel>Tên sân (Số sân)</FormLabel>
                   <FormControl>
-                    <Input disabled={isPending} placeholder="VD: P-101, Villa A2..." {...field} />
+                    <Input disabled={isPending} placeholder="VD: Sân 1, Sân 5 người A..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -292,10 +327,10 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
             
             <FormField
               control={form.control}
-              name="roomTypeId"
+              name="courtTypeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại phòng (Thuộc chi nhánh)</FormLabel>
+                  <FormLabel>Hạng sân (Khu vực / Hệ thống)</FormLabel>
                   <Select
                     disabled={isPending}
                     onValueChange={field.onChange}
@@ -304,15 +339,15 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn loại phòng" />
+                        <SelectValue placeholder="Chọn hạng sân" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.entries(groupedTypes).map(([hotelName, types]) => (
-                         <SelectGroup key={hotelName}>
+                      {Object.entries(groupedTypes).map(([locationName, types]) => (
+                         <SelectGroup key={locationName}>
                              <SelectLabel className="flex items-center gap-1 text-blue-600 bg-blue-50 py-1.5 pl-2">
                                 <MapPin className="h-3.5 w-3.5" />
-                                {hotelName}
+                                {locationName}
                              </SelectLabel>
                              {types.map((type) => (
                                 <SelectItem key={type.id} value={type.id} className="pl-6">
@@ -338,9 +373,9 @@ export const RoomForm = ({ initialData, roomTypes }: RoomFormProps) => {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-white">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Trạng thái phòng</FormLabel>
+                    <FormLabel className="text-base">Trạng thái sân</FormLabel>
                     <FormDescription>
-                      Bật nếu phòng sẵn sàng đón khách.
+                      Bật nếu sân sẵn sàng đón khách.
                     </FormDescription>
                   </div>
                   <FormControl>

@@ -44,12 +44,17 @@ export const LocationForm = ({ initialData }: LocationFormProps) => {
   const [isPending, startTransition] = useTransition();
 
   const title = initialData ? "Cập nhật chi nhánh" : "Thêm chi nhánh mới";
-  const description = initialData ? "Chỉnh sửa thông tin khách sạn/chi nhánh." : "Tạo mới một địa điểm kinh doanh.";
+  const description = initialData ? "Chỉnh sửa thông tin cơ sở / chi nhánh." : "Tạo mới một địa điểm kinh doanh.";
   const action = initialData ? "Lưu thay đổi" : "Tạo mới";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      name: initialData.name,
+      address: initialData.address || "",
+      description: initialData.description || "",
+      imageUrl: initialData.imageUrl || "",
+    } : {
       name: "",
       address: "",
       description: "",
@@ -118,9 +123,9 @@ export const LocationForm = ({ initialData }: LocationFormProps) => {
                         name="name"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Tên Chi nhánh / Khách sạn</FormLabel>
+                            <FormLabel>Tên Chi nhánh / Cơ sở</FormLabel>
                             <FormControl>
-                                <Input disabled={isPending} placeholder="VD: Ha Long Pearl Hotel" {...field} />
+                                <Input disabled={isPending} placeholder="VD: Sân bóng Duy Tân" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

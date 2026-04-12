@@ -9,51 +9,85 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { CalendarIcon, Loader2, Clock } from "lucide-react";
-import { toast } from "sonner"; 
+import { CalendarIcon, Loader2, Clock, Plus, Minus, Shirt, Waves } from "lucide-react";
+import { getExtraServices } from "@/actions/client/get-services";
+import { getAvailableTimeSlots } from "@/actions/client/booking";
 
 interface TimeSlotModel {
   id: string;
-  startTime: string; // e.g., "17:00"
-  endTime: string;   // e.g., "18:30"
+  startTime: string;
+  endTime: string;
   status: "available" | "booked" | "pending"; 
 }
 
 interface BookingFormProps {
-  courtId?: string; 
-  roomId?: string; // Tương thích ngược với file cha nếu chưa đổi
+  courtId: string; 
   basePrice: number;
   isAvailable: boolean;
 }
 
-// TODO: Replace with Real API Data
-const MOCK_TIME_SLOTS: TimeSlotModel[] = [
-  { id: "1", startTime: "16:00", endTime: "17:30", status: "booked" }, // Booked (Red)
-  { id: "2", startTime: "17:30", endTime: "19:00", status: "pending" }, // Hold (Yellow)
-  { id: "3", startTime: "19:00", endTime: "20:30", status: "available" }, // Trống (Green)
-  { id: "4", startTime: "20:30", endTime: "22:00", status: "available" },
-];
-
-export const BookingForm = ({ courtId, roomId, basePrice, isAvailable }: BookingFormProps) => {
+export const BookingForm = ({ courtId, basePrice, isAvailable }: BookingFormProps) => {
   const router = useRouter();
-  const actualId = courtId || roomId;
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [slots, setSlots] = useState<TimeSlotModel[]>(MOCK_TIME_SLOTS);
+  const [slots, setSlots] = useState<TimeSlotModel[]>([]);
+  const [extraServices, setExtraServices] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<Record<string, number>>({});
 
-  // You can implement useEffect to fetch actual TimeSlots from backend when `date` changes.
+  useEffect(() => {
+    const fetchServices = async () => {
+      const data = await getExtraServices();
+      setExtraServices(data);
+    };
+    fetchServices();
+  }, []);
+
+  useEffect(() => {
+    const fetchSlots = async () => {
+       if (date && courtId) {
+          const fetchedSlots = await getAvailableTimeSlots(courtId, date.toISOString());
+          setSlots(fetchedSlots as TimeSlotModel[]);
+          setSelectedSlotId(null);
+       } else {
+          setSlots([]);
+       }
+    };
+    fetchSlots();
+  }, [date, courtId]);
+
+  const updateServiceQuantity = (id: string, delta: number) => {
+    setSelectedServices((prev) => {
+      const current = prev[id] || 0;
+      const next = Math.max(0, current + delta);
+      if (next === 0) {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: next };
+    });
+  };
+
+  const calculateTotalExtras = () => {
+    return Object.entries(selectedServices).reduce((total, [id, qty]) => {
+      const service = extraServices.find(s => s.id === id);
+      return total + (Number(service?.price || 0) * qty);
+    }, 0);
+  };
+
+  const totalAmount = basePrice + calculateTotalExtras();
 
   const onBooking = async () => {
-    if (!date || !selectedSlotId || !actualId) return;
+    if (!date || !selectedSlotId || !courtId) return;
     setIsLoading(true);
 
     try {
       const params = new URLSearchParams({
-        courtId: actualId,
+        courtId: courtId,
         date: date.toISOString(),
         timeSlotId: selectedSlotId,
-        totalPrice: basePrice.toString(), // Simplified base price
+        totalPrice: totalAmount.toString(),
+        services: JSON.stringify(selectedServices),
       });
       
       router.push(`/booking/checkout?${params.toString()}`);
@@ -100,7 +134,6 @@ export const BookingForm = ({ courtId, roomId, basePrice, isAvailable }: Booking
           </label>
           <div className="grid grid-cols-2 gap-3">
             {slots.map((slot) => {
-               // Color UI Logic
                let slotVariantClasses = "";
                const isSelected = selectedSlotId === slot.id;
 
@@ -110,22 +143,22 @@ export const BookingForm = ({ courtId, roomId, basePrice, isAvailable }: Booking
                  slotVariantClasses = "bg-yellow-50 hover:bg-yellow-50 border-yellow-200 text-yellow-600 cursor-not-allowed opacity-70";
                } else {
                  if (isSelected) {
-                   slotVariantClasses = "bg-emerald-500 hover:bg-emerald-600 border-emerald-600 text-white shadow-md transform scale-[1.02]";
+                   slotVariantClasses = "bg-blue-600 hover:bg-blue-700 border-blue-700 text-white shadow-md transform scale-[1.02]";
                  } else {
-                   slotVariantClasses = "bg-white hover:bg-emerald-50 border-emerald-200 text-emerald-700 hover:border-emerald-400";
+                   slotVariantClasses = "bg-white hover:bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400";
                  }
                }
 
                return (
                  <button
-                   key={slot.id}
-                   disabled={slot.status !== "available"}
-                   onClick={() => setSelectedSlotId(slot.id)}
-                   className={cn(
-                     "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200", 
-                     slotVariantClasses
-                   )}
-                 >
+                    key={slot.id}
+                    disabled={slot.status !== "available"}
+                    onClick={() => setSelectedSlotId(slot.id)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200", 
+                      slotVariantClasses
+                    )}
+                  >
                    <span className="font-semibold">{slot.startTime} - {slot.endTime}</span>
                    <span className="text-xs opacity-90 mt-1">
                      {slot.status === "available" ? "Trống" : slot.status === "booked" ? "Đã đặt" : "Đang giữ"}
@@ -137,22 +170,70 @@ export const BookingForm = ({ courtId, roomId, basePrice, isAvailable }: Booking
         </div>
       )}
 
+      <div className="space-y-3">
+        <label className="text-sm font-medium flex items-center gap-2">
+          <Plus className="w-4 h-4 text-slate-500" />
+          3. Dịch vụ kèm theo
+        </label>
+        <div className="space-y-3">
+          {extraServices.map((service) => (
+            <div key={service.id} className="flex items-center justify-between p-3 bg-white border rounded-xl hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  {service.name.toLowerCase().includes("áo") ? <Shirt className="w-5 h-5 text-blue-600" /> : <Waves className="w-5 h-5 text-blue-600" />}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{service.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatCurrency(Number(service.price))}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => updateServiceQuantity(service.id, -1)}
+                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-slate-50 disabled:opacity-30"
+                  disabled={!selectedServices[service.id]}
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-4 text-center font-bold">{selectedServices[service.id] || 0}</span>
+                <button 
+                  onClick={() => updateServiceQuantity(service.id, 1)}
+                  className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-slate-50"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {selectedSlotId && (
-        <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm border">
+        <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm border border-slate-200">
           <div className="flex justify-between">
             <span className="text-slate-600">Giá ca đã chọn</span>
             <span className="font-medium">{formatCurrency(basePrice)}</span>
           </div>
-          <div className="flex justify-between text-base font-bold pt-2 border-t">
+          {Object.entries(selectedServices).map(([id, qty]) => {
+            const service = extraServices.find(s => s.id === id);
+            if (!service) return null;
+            return (
+              <div key={id} className="flex justify-between text-xs text-slate-500">
+                <span>{service.name} x {qty}</span>
+                <span>{formatCurrency(Number(service.price) * qty)}</span>
+              </div>
+            );
+          })}
+          <div className="flex justify-between text-base font-bold pt-2 border-t mt-2">
             <span>Tổng cộng</span>
-            <span className="text-emerald-600">{formatCurrency(basePrice)}</span>
+            <span className="text-blue-600">{formatCurrency(totalAmount)}</span>
           </div>
         </div>
       )}
 
       <Button 
         size="lg" 
-        className="w-full text-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50" 
+        className="w-full text-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50" 
         onClick={onBooking}
         disabled={!isAvailable || !date || !selectedSlotId || isLoading}
       >

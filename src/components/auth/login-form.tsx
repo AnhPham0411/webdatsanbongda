@@ -67,10 +67,10 @@ export const LoginForm = () => {
     <div className="w-full max-w-[400px] shadow-2xl p-8 bg-white rounded-2xl border border-slate-100">
         <div className="flex flex-col space-y-2 text-center mb-8">
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-              Hotel Portal
+              Quản trị Hệ thống Sân bóng
             </h2>
             <p className="text-sm text-slate-500 font-medium">
-              Vui lòng đăng nhập để tiếp tục quản trị
+              Chào mừng bạn quay trở lại!
             </p>
         </div>
         
@@ -95,7 +95,7 @@ export const LoginForm = () => {
                         <Input
                           {...field}
                           disabled={isPending}
-                          placeholder="admin@hotel.com"
+                          placeholder="admin@sanbong.com"
                           type="email"
                           className="pl-10 h-11 border-slate-200 focus:border-sky-500 focus:ring-sky-500 transition-all"
                         />

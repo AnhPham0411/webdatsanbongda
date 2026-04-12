@@ -13,7 +13,7 @@ export const getWishlist = async () => {
       include: {
         court: {
           include: {
-            images: true,
+            images: true, 
             courtType: {
               include: {
                 location: true,
@@ -27,14 +27,16 @@ export const getWishlist = async () => {
 
     return wishlist.map((item) => {
       const court = item.court;
-      const locationName = court.courtType.location?.name || "Đang cập nhật";
+      const images = court.images || [];
+      const courtType = court.courtType || {};
+      const locationName = courtType.location?.name || "Đang cập nhật";
 
       return {
         id: court.id,
         name: court.name,
         address: locationName, 
-        price: Number(court.courtType.basePrice),
-        image: court.images[0]?.url || "/images/placeholder.jpg",
+        price: Number(courtType.basePrice),
+        image: images[0]?.url || "/images/hero-sunset.png",
       };
     });
   } catch (error) {

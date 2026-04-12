@@ -25,7 +25,7 @@ const OverviewChart = ({ data }: OverviewChartProps) => {
           tickFormatter={(value) => `${value / 1000000}M`} // Rút gọn số liệu trục Y
         />
         <Tooltip 
-            formatter={(value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)}
+            formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
             contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb' }}
         />
         <Bar

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { RoomCard } from "@/components/client/room-card";
+import { CourtCard } from "@/components/client/court-card";
 import { HeartCrack } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,11 @@ export default async function WishlistPage() {
     include: {
       court: {
         include: {
-          images: true,
+          images: true, // Renamed in schema.prisma
           courtType: {
             include: { amenities: true, location: true }
           },
-          bookings: { // Để tính rating cho RoomCard
+          bookings: { // Renamed in schema.prisma
              where: { review: { isNot: null } },
              select: { review: { select: { rating: true } } }
           }
@@ -35,19 +35,24 @@ export default async function WishlistPage() {
     orderBy: { createdAt: "desc" }
   });
 
-  // Map dữ liệu về chuẩn SafeRoom cho RoomCard
+  // Map dữ liệu về chuẩn SafeCourt cho CourtCard
   const likedCourts = wishlists.map((item) => {
       const court = item.court;
+      const images = (court as any).images || [];
+      const courtType = (court as any).courtType || {};
+      const bookings = (court as any).bookings || [];
+
       // Flatten reviews logic
-      const reviews = (court as any).bookings.map((b: any) => b.review).filter((r: any) => r !== null);
+      const reviews = bookings.map((b: any) => b.review).filter((r: any) => r !== null);
       
       return {
           ...court,
           createdAt: court.createdAt.toISOString(),
-          roomType: {
-              ...court.courtType,
-              basePrice: Number(court.courtType.basePrice)
+          courtType: {
+              ...courtType,
+              basePrice: Number(courtType.basePrice)
           },
+          images: images,
           reviews,
           isLiked: true 
       };
@@ -74,7 +79,7 @@ export default async function WishlistPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {likedCourts.map((court) => (
-            <RoomCard key={court.id} room={court} currentUser={session.user} />
+            <CourtCard key={court.id} court={court as any} currentUser={session.user} />
           ))}
         </div>
       )}

@@ -1,3 +1,8 @@
+/**
+ * @file calendar-client.tsx
+ * @description Thành phần lịch biểu hiển thị danh sách các đơn đặt sân.
+ * Sử dụng thư viện react-big-calendar với cấu hình tiếng Việt.
+ */
 "use client";
 
 import { useState } from "react";
@@ -18,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Clock, User as UserIcon, Activity, CalendarDays } from "lucide-react";
 
-// 1. Cấu hình Localizer cho tiếng Việt
+// 1. Cấu hình Localizer cho tiếng Việt sử dụng date-fns
 const locales = {
   vi: vi,
 };
@@ -37,7 +42,7 @@ interface CalendarEvent {
   title: string;
   start: Date;
   end: Date;
-  resource: Booking & { court: Court; timeSlot: TimeSlot; user: User; payment: any }; // Dữ liệu gốc để hiển thị chi tiết
+  resource: any; // Dữ liệu gốc để hiển thị chi tiết (đã loại bỏ Prisma Decimal)
 }
 
 interface CalendarClientProps {
@@ -52,13 +57,16 @@ export const CalendarClient = ({ initialEvents }: CalendarClientProps) => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // 2. Xử lý click vào sự kiện
+  // 2. Xử lý khi người dùng nhấn vào một sự kiện trên lịch
   const onSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
     setIsOpen(true);
   };
 
-  // 3. Tùy chỉnh màu sắc sự kiện dựa trên trạng thái Booking
+  /**
+   * 3. Tùy chỉnh phong cách (style) cho từng sự kiện dựa trên trạng thái của đơn đặt sân.
+   * Màu sắc giúp người quản trị dễ dàng phân biệt trạng thái đơn hàng.
+   */
   const eventPropGetter = (event: CalendarEvent) => {
     const status = event.resource.status;
     let className = "";
@@ -68,14 +76,14 @@ export const CalendarClient = ({ initialEvents }: CalendarClientProps) => {
     switch (status) {
       case "CONFIRMED":
         className = isPaid 
-          ? "bg-emerald-600 border-emerald-700 text-white" 
-          : "bg-blue-600 border-blue-700 text-white";
+          ? "bg-emerald-600 border-emerald-700 text-white" // Đã xác nhận & Đã thanh toán (Xanh lá)
+          : "bg-blue-600 border-blue-700 text-white";     // Đã xác nhận nhưng chưa thanh toán (Xanh dương)
         break;
       case "PENDING":
-        className = "bg-yellow-500 border-yellow-600 text-white";
+        className = "bg-yellow-500 border-yellow-600 text-white"; // Đang chờ xử lý (Vàng)
         break;
       case "CANCELLED":
-        className = "bg-red-500 border-red-600 text-white opacity-70";
+        className = "bg-red-500 border-red-600 text-white opacity-70"; // Đã hủy (Đỏ)
         break;
       default:
         className = "bg-gray-500 text-white";

@@ -47,12 +47,19 @@ const formSchema = z.object({
   name: z.string().min(1, "Bắt buộc nhập tên"),
   locationId: z.string().min(1, "Vui lòng chọn vị trí"), 
   description: z.string().optional(),
-  basePrice: z.coerce.number().min(0),
-  capacity: z.coerce.number().min(1),
-  amenities: z.array(z.string()).optional(), 
+  basePrice: z.coerce.number().min(0, "Giá phải lớn hơn hoặc bằng 0"),
+  capacity: z.coerce.number().min(1, "Sức chứa tối thiểu là 1 người"),
+  amenities: z.array(z.string()).default([]), 
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  name: string;
+  locationId: string;
+  description?: string;
+  basePrice: number;
+  capacity: number;
+  amenities: string[];
+};
 
 interface CategoryFormProps {
   initialData?: {
@@ -76,8 +83,8 @@ export const CategoryForm = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const title = initialData ? "Cập nhật loại phòng" : "Tạo loại phòng mới";
-  const description = initialData ? "Chỉnh sửa thông tin chi tiết và giá." : "Thêm hạng phòng mới vào hệ thống.";
+  const title = initialData ? "Cập nhật hệ thống sân" : "Tạo hạng sân mới";
+  const description = initialData ? "Chỉnh sửa thông tin chi tiết và giá thuê." : "Thêm cấu hình sân mới vào hệ thống.";
   const action = initialData ? "Lưu thay đổi" : "Tạo mới";
 
   // --- CHUẨN HÓA DỮ LIỆU ĐẦU VÀO ---
@@ -98,8 +105,8 @@ export const CategoryForm = ({
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues, // Sử dụng biến defaultValues đã chuẩn hóa ở trên
+    resolver: zodResolver(formSchema) as any,
+    defaultValues: defaultValues as any, // Sử dụng biến defaultValues đã chuẩn hóa ở trên
   });
 
   // Reset form nếu initialData thay đổi (trường hợp load lại trang hoặc chuyển trang nhanh)
@@ -181,11 +188,11 @@ export const CategoryForm = ({
                                 name="name"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tên loại phòng</FormLabel>
+                                    <FormLabel>Tên hạng sân (Hệ thống)</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <Type className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input disabled={isPending} placeholder="VD: Deluxe Ocean View..." className="pl-9" {...field} />
+                                            <Input disabled={isPending} placeholder="VD: Sân 7 người tiêu chuẩn..." className="pl-9" {...field} />
                                         </div>
                                     </FormControl>
                                     <FormMessage />
@@ -209,7 +216,7 @@ export const CategoryForm = ({
                                                 <SelectTrigger>
                                                     <div className="flex items-center gap-2">
                                                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                        <SelectValue placeholder="Chọn vị trí của loại phòng" />
+                                                        <SelectValue placeholder="Chọn vị trí của loại sân này" />
                                                     </div>
                                                 </SelectTrigger>
                                             </FormControl>
@@ -247,7 +254,7 @@ export const CategoryForm = ({
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <CheckSquare className="h-5 w-5 text-primary" />
-                                Tiện nghi phòng
+                                Tiện ích / Dịch vụ sân
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -302,7 +309,7 @@ export const CategoryForm = ({
                                 name="basePrice"
                                 render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Giá cơ bản (1 đêm)</FormLabel>
+                                    <FormLabel>Giá thuê sân (mỗi ca)</FormLabel>
                                     <FormControl>
                                         <div className="relative">
                                             <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

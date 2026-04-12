@@ -1,3 +1,8 @@
+/**
+ * @file courts.ts
+ * @description Các Server Actions xử lý logic nghiệp vụ cho việc quản lý sân bóng (Admin).
+ * Bao gồm các thao tác: Thêm, Xửa, Xóa và Thay đổi trạng thái sân.
+ */
 "use server";
 
 import { db } from "@/lib/db";
@@ -14,6 +19,10 @@ const CourtSchema = z.object({
   }).array(), 
 });
 
+/**
+ * Tạo sân bóng mới.
+ * @param values Dữ liệu từ form đã qua validation.
+ */
 export const createCourt = async (values: z.infer<typeof CourtSchema>) => {
   try {
     const session = await auth();
@@ -41,6 +50,11 @@ export const createCourt = async (values: z.infer<typeof CourtSchema>) => {
   }
 };
 
+/**
+ * Cập nhật thông tin sân bóng hiện có.
+ * @param id ID của sân cần cập nhật.
+ * @param values Dữ liệu mới từ form.
+ */
 export const updateCourt = async (id: string, values: z.infer<typeof CourtSchema>) => {
   try {
     const session = await auth();
@@ -73,6 +87,10 @@ export const updateCourt = async (id: string, values: z.infer<typeof CourtSchema
   }
 };
 
+/**
+ * Xóa sân bóng khỏi hệ thống.
+ * @param id ID của sân cần xóa.
+ */
 export const deleteCourt = async (id: string) => {
   try {
     const session = await auth();
@@ -87,3 +105,28 @@ export const deleteCourt = async (id: string) => {
     return { error: "Không thể xóa sân đang có dữ liệu liên kết!" };
   }
 };
+
+/**
+ * Thay đổi trạng thái "Sẵn sàng" của sân bóng.
+ * @param id ID của sân.
+ * @param currentStatus Trạng thái hiện tại.
+ */
+export const toggleCourtAvailability = async (id: string, currentStatus: boolean) => {
+  try {
+    const session = await auth();
+    const role = session?.user?.role;
+    if (role !== "ADMIN" && role !== "STAFF") return { error: "Bạn không có quyền thay đổi trạng thái sân!" };
+
+    await db.court.update({
+      where: { id },
+      data: { isAvailable: !currentStatus }
+    });
+
+    revalidatePath("/admin/courts");
+    revalidatePath("/search");
+    return { success: `Đã ${!currentStatus ? "bật" : "tắt"} sẵn sàng!` };
+  } catch (error) {
+    return { error: "Lỗi hệ thống khi cập nhật trạng thái!" };
+  }
+};
+

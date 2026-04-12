@@ -6,35 +6,31 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Bed, Menu, Heart, MapPin, X } from "lucide-react"; 
+import { Menu, Heart, MapPin, X } from "lucide-react"; 
 import { cn, formatCurrency } from "@/lib/utils";
 import { UserMenu } from "@/components/client/user-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getWishlist } from "@/actions/client/get-wishlist"; 
 import { toggleWishlist } from "@/actions/client/wishlist"; 
-// 👇 1. Import Store
 import { useWishlistStore } from "../../hooks/use-wishlist-store"; 
 
 const WishlistNav = () => {
   const { data: session } = useSession();
   const router = useRouter();
   
-  // 👇 2. Lấy dữ liệu từ Store thay vì State nội bộ
   const { items, setItems, removeItem, hasLoaded } = useWishlistStore();
 
-  // 3. Load dữ liệu từ DB vào Store 1 lần duy nhất khi login
   useEffect(() => {
     if (session?.user && !hasLoaded) {
       getWishlist().then((data) => setItems(data));
     }
   }, [session, hasLoaded, setItems]);
 
-  // 4. Hàm xóa (Đồng bộ Store ngay lập tức)
-  const handleRemove = async (roomId: string, e: React.MouseEvent) => {
+  const handleRemove = async (courtId: string, e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     
-    removeItem(roomId); // Xóa khỏi Store -> RoomCard tự tắt tim
-    await toggleWishlist(roomId); // Xóa DB
+    removeItem(courtId);
+    await toggleWishlist(courtId);
     router.refresh();
   };
 
@@ -52,7 +48,6 @@ const WishlistNav = () => {
       </PopoverTrigger>
       
       <PopoverContent align="end" className="w-96 p-0 shadow-xl border-slate-100 rounded-xl overflow-hidden">
-        {/* Header */}
         <div className="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
           <div>
              <h4 className="font-bold text-slate-900">Sân yêu thích</h4>
@@ -65,7 +60,6 @@ const WishlistNav = () => {
           )}
         </div>
         
-        {/* Danh sách phòng (Lấy từ items của Store) */}
         <div className="max-h-[350px] overflow-y-auto min-h-[100px] bg-slate-50/30">
             {items.length === 0 ? (
                 <div className="py-10 text-center text-slate-500 text-sm flex flex-col items-center">
@@ -77,15 +71,13 @@ const WishlistNav = () => {
                     {items.map((item) => (
                         <Link 
                             key={item.id} 
-                            href={`/rooms/${item.id}`}
+                            href={`/courts/${item.id}`}
                             className="flex items-start gap-3 p-3 hover:bg-white hover:shadow-md rounded-xl transition-all group relative border border-transparent hover:border-slate-100 bg-white shadow-sm"
                         >
-                            {/* Ảnh */}
                             <div className="relative h-20 w-20 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100 bg-slate-100">
                                 <Image src={item.image} alt={item.name} fill className="object-cover" />
                             </div>
 
-                            {/* Thông tin */}
                             <div className="flex-1 min-w-0 pr-6 flex flex-col justify-between h-20 py-0.5">
                                 <div>
                                     <h5 className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
@@ -101,7 +93,6 @@ const WishlistNav = () => {
                                 </p>
                             </div>
 
-                            {/* Nút Xóa */}
                             <button 
                                 className="absolute top-2 right-2 p-1.5 rounded-full hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
                                 title="Xóa khỏi danh sách"
@@ -115,7 +106,6 @@ const WishlistNav = () => {
             )}
         </div>
 
-        {/* Footer */}
         <div className="p-3 border-t border-slate-100 bg-white">
             <Button asChild className="w-full bg-slate-900 hover:bg-blue-600 text-white shadow-lg transition-all rounded-xl h-11 font-semibold">
                 <Link href="/wishlist">Xem tất cả danh sách</Link>
@@ -126,7 +116,6 @@ const WishlistNav = () => {
   );
 };
 
-// ... Phần Navbar chính giữ nguyên (Copy từ file cũ của bạn) ...
 export const Navbar = () => {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -141,14 +130,11 @@ export const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md shadow-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-      {/* Icon: Đổi sang màu Sky-500 và dùng BedDouble cho sang trọng hơn */}
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white shadow-lg shadow-sky-200 group-hover:bg-sky-600 group-hover:scale-105 transition-all duration-300">
         <Activity className="h-6 w-6" />
       </div>
       
-      {/* Text: Chia dòng để tạo điểm nhấn thương hiệu */}
       <div className="flex flex-col">
         <span className="text-lg font-bold tracking-tight text-slate-900 leading-none">
           Sport
@@ -159,7 +145,6 @@ export const Navbar = () => {
       </div>
     </Link>
 
-        {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-1">
           {routes.map((route) => (
             <Link
@@ -177,10 +162,8 @@ export const Navbar = () => {
           ))}
         </div>
 
-        {/* Right Section */}
         <div className="flex items-center gap-2">
           
-          {/* Wishlist Dropdown */}
           <div className="hidden md:block mr-1">
              <WishlistNav />
           </div>
@@ -208,3 +191,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default Navbar;

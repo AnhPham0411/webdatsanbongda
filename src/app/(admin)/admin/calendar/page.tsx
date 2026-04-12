@@ -28,10 +28,20 @@ export default async function CalendarPage() {
 
     return {
       id: b.id,
-      title: `${b.court.name} - ${b.guestName || b.user.name}`,
+      title: `${b.court.name} - ${b.guestName || b.user?.name || ''}`,
       start: startDate,
       end: endDate,
-      resource: b, 
+      resource: {
+        ...b,
+        totalPrice: Number(b.totalPrice || 0),
+        depositAmount: Number(b.depositAmount || 0),
+        discountValue: Number(b.discountValue || 0),
+        originalPrice: Number(b.originalPrice || 0),
+        payment: b.payment ? {
+          ...b.payment,
+          amount: Number(b.payment.amount || 0),
+        } : null
+      }, 
     };
   });
 

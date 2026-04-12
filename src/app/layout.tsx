@@ -2,17 +2,13 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-
-// Lưu ý: Kiểm tra xem file Providers của bạn export default hay export const
-// Nếu export default function Providers... thì dùng dòng dưới:
 import Providers from "@/components/Providers"; 
-// Nếu export const Providers = ... thì dùng: import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Hệ thống đặt sân bóng",
-  description: "Graduation Project",
+  title: "Sport Arena - Hệ thống đặt sân bóng trực tuyến",
+  description: "Hệ thống quản lý và đặt sân bóng đá cỏ nhân tạo hiện đại, tiện lợi và uy chín.",
 };
 
 export default function RootLayout({
@@ -22,7 +18,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      {/* 👇 THÊM suppressHydrationWarning={true} ĐỂ SỬA LỖI EXTENSION TRÌNH DUYỆT 👇 */}
       <body className={inter.className} suppressHydrationWarning={true}>
         <Providers>
             {children}
