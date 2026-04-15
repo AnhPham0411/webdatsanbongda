@@ -59,7 +59,13 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
           timeSlotId,
           OR: [
             { status: "CONFIRMED" },
-            { status: "PENDING", createdAt: { gt: tenMinsAgo } }
+            { 
+              status: "PENDING", 
+              OR: [
+                { createdAt: { gt: tenMinsAgo } },
+                { paymentBill: { not: null } } as any
+              ]
+            }
           ]
         },
       });
@@ -76,6 +82,8 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
           timeSlotId,
           totalPrice,
           depositAmount,
+          voucherId: validated.data.voucherId,
+          discountValue: validated.data.discountValue || 0,
           status: "PENDING",
           paymentStatus: "UNPAID",
           ...guestInfo,
@@ -103,6 +111,13 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
             });
           }
         }
+      }
+
+      if (validated.data.voucherId) {
+          await tx.voucher.update({
+              where: { id: validated.data.voucherId },
+              data: { usedCount: { increment: 1 } }
+          });
       }
 
       await tx.payment.create({
@@ -172,25 +187,53 @@ export const cancelBooking = async (bookingId: string) => {
     }
 
     if (booking.timeSlot) {
+      // Lấy cấu hình từ Settings, nếu không có mặc định là 6 giờ
+      const settings = await db.settings.findUnique({ where: { id: "system" } });
+      const cancelLimitHours = settings?.cancelBeforeHours ?? 6;
+
       const matchStart = new Date(booking.date);
       const timeStart = new Date(booking.timeSlot.startTime);
       matchStart.setHours(timeStart.getUTCHours(), timeStart.getUTCMinutes(), 0, 0); 
       
-      if (matchStart.getTime() - Date.now() < 6 * 60 * 60 * 1000) {
-         return { error: "Chỉ được phép hủy sân trước giờ đá 6 tiếng. Vui lòng liên hệ hotline để được hỗ trợ." };
+      if (matchStart.getTime() - Date.now() < cancelLimitHours * 60 * 60 * 1000) {
+         return { error: `Chỉ được phép hủy sân trước giờ đá ${cancelLimitHours} tiếng. Vui lòng liên hệ hotline để được hỗ trợ.` };
       }
     }
 
-    await db.booking.update({
-      where: { id: bookingId },
-      data: { status: "CANCELLED" }
+    await db.$transaction(async (tx) => {
+      // 1. Cập nhật trạng thái đơn hàng và thanh toán (nếu đã trả tiền thì hoàn tiền)
+      const isPaid = booking.paymentStatus === "PAID";
+      
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { 
+          status: "CANCELLED",
+          paymentStatus: isPaid ? "REFUNDED" : booking.paymentStatus
+        }
+      });
+
+      // 2. Cập nhật bản ghi thanh toán nếu cần
+      if (isPaid) {
+        await tx.payment.updateMany({
+          where: { bookingId },
+          data: { status: "REFUNDED" }
+        });
+      }
+
+      // 3. Hoàn trả lại voucher nếu có sử dụng
+      if (booking.voucherId) {
+        await tx.voucher.update({
+          where: { id: booking.voucherId },
+          data: { usedCount: { decrement: 1 } }
+        });
+      }
     });
 
     revalidatePath("/my-bookings");
     revalidatePath(`/courts/${booking.courtId}`);
     revalidatePath("/admin/bookings");
     
-    return { success: "Đã hủy đơn đặt sân thành công!" };
+    return { success: "Đã hủy đơn đặt sân thành công! Sân đã được giải phóng cho khách khác." };
   } catch (error) {
     console.error("CANCEL_ERROR:", error);
     return { error: "Lỗi hệ thống khi hủy đơn!" };
@@ -219,13 +262,14 @@ export const getAvailableTimeSlots = async (courtId: string, dateStr: string) =>
        let status: "available" | "booked" | "pending" = "available";
        
        if (b) {
-         if (b.status === "CONFIRMED") {
-           status = "booked";
-         } else if (b.status === "PENDING") {
-           if (new Date(b.createdAt) > tenMinsAgo) {
-              status = "pending";
-           }
-         }
+          if (b.status === "CONFIRMED") {
+            status = "booked";
+          } else if (b.status === "PENDING") {
+            // Giữ chỗ nếu mới tạo dưới 10p HOẶC đã có ảnh Bill
+            if (new Date(b.createdAt) > tenMinsAgo || (b as any).paymentBill) {
+               status = "pending";
+            }
+          }
        }
        
        const sTime = new Date(slot.startTime);

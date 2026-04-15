@@ -12,6 +12,8 @@ import { QrCode } from "lucide-react";
 import { PaymentQRModal } from "@/components/admin/payment-qr-modal";
 import { generateVietQrUrl } from "@/lib/vietqr";
 import { DeleteBookingButton } from "@/components/client/delete-booking-button";
+import { PaymentReceiptUpload } from "@/components/client/payment-receipt-upload";
+import { BookingTimer } from "@/components/client/booking-timer";
 
 export default async function MyBookingsPage() {
   const session = await auth();
@@ -93,7 +95,7 @@ export default async function MyBookingsPage() {
                </div>
 
                {/* QR Code section cho PC */}
-               <div className="hidden md:flex p-5 items-center justify-center border-l bg-slate-50/50 w-36 shrink-0">
+               <div className="hidden md:flex flex-col p-5 items-center justify-center border-l bg-slate-50/50 w-36 shrink-0">
                   {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' ? (
                   <PaymentQRModal 
                       bookingId={booking.id} 
@@ -122,11 +124,27 @@ export default async function MyBookingsPage() {
                       </span>
                   </div>
                   )}
+
+                  {/* Gửi Bill ngay dưới QR (Mới) */}
+                  <div className="mt-4 w-full px-2">
+                    {booking.paymentStatus !== 'PAID' && booking.status !== 'CANCELLED' && (
+                        <PaymentReceiptUpload 
+                            bookingId={booking.id} 
+                            existingBill={booking.paymentBill}
+                        />
+                    )}
+                   </div>
                </div>
 
                {/* Nút hành động */}
                <div className="p-4 bg-gray-50 flex flex-row md:flex-col justify-center gap-2 border-t md:border-t-0 md:border-l w-full md:w-40 shrink-0">
-                  <Link href={`/rooms/${booking.courtId}`} className="w-full">
+                  <BookingTimer 
+                      createdAt={booking.createdAt} 
+                      status={booking.status} 
+                      existingBill={booking.paymentBill}
+                  />
+                  
+                  <Link href={`/courts/${booking.courtId}`} className="w-full">
                      <Button variant="outline" size="sm" className="w-full">Đặt lại</Button>
                   </Link>
 

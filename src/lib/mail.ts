@@ -173,3 +173,45 @@ export const sendVoucherNotification = async (
     html,
   });
 };
+
+export const sendInquiryReplyEmail = async (
+  email: string,
+  subject: string,
+  originalMessage: string,
+  replyContent: string
+) => {
+  const html = `
+    <div style="background-color: ${colors.background}; padding: 40px 0; font-family: sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: ${colors.white}; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div style="background-color: ${colors.secondary}; padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Phản Hồi Từ Sport Arena</h1>
+        </div>
+        <div style="padding: 40px 30px; color: ${colors.text};">
+          <p>Chào bạn, chúng tôi đã nhận được yêu cầu của bạn về: <b>"${subject}"</b>.</p>
+          
+          <div style="background-color: #f1f5f9; border-left: 4px solid #cbd5e1; padding: 15px; margin: 20px 0; font-style: italic;">
+            <p style="margin: 0; color: #64748b; font-size: 14px;">Câu hỏi của bạn:</p>
+            <p style="margin: 5px 0 0 0;">${originalMessage}</p>
+          </div>
+
+          <p style="margin-top: 25px; font-weight: bold; color: ${colors.primary};">Lời nhắn từ Ban quản trị:</p>
+          <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 20px; color: #0c4a6e;">
+            ${replyContent.replace(/\n/g, "<br/>")}
+          </div>
+
+          <p style="margin-top: 30px;">Cảm ơn bạn đã quan tâm đến dịch vụ của chúng tôi. Nếu có thêm thắc mắc, hãy phản hồi lại email này.</p>
+          
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">© 2026 Sport Arena - Hệ thống đặt sân bóng.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"Sport Arena Support" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `Re: Phản hồi yêu cầu: ${subject || "Từ Sport Arena"}`,
+    html,
+  });
+};

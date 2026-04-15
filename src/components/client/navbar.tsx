@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { getWishlist } from "@/actions/client/get-wishlist"; 
 import { toggleWishlist } from "@/actions/client/wishlist"; 
 import { useWishlistStore } from "../../hooks/use-wishlist-store"; 
+import { NotificationNav } from "@/components/client/notification-nav";
 
 const WishlistNav = () => {
   const { data: session } = useSession();
@@ -164,7 +165,8 @@ export const Navbar = () => {
 
         <div className="flex items-center gap-2">
           
-          <div className="hidden md:block mr-1">
+          <div className="hidden md:flex items-center gap-1 mr-1">
+             <NotificationNav />
              <WishlistNav />
           </div>
 

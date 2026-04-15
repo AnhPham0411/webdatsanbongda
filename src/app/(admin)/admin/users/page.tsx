@@ -18,12 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserRoleSelect } from "@/components/admin/user-role-select"; 
+import { getVouchers } from "@/actions/admin/voucher";
+import { UserVoucherDialog } from "@/components/admin/user-voucher-dialog";
 
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: { query?: string };
+export default async function UsersPage(props: {
+  searchParams: Promise<{ query?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const session = await auth();
 
   if (!session?.user || session.user.role !== "ADMIN") {
@@ -41,6 +42,8 @@ export default async function UsersPage({
     },
     orderBy: { createdAt: "desc" },
   });
+
+  const vouchers = await getVouchers();
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
@@ -91,12 +94,13 @@ export default async function UsersPage({
               <TableHead>Liên hệ</TableHead>
               <TableHead>Ngày tham gia</TableHead>
               <TableHead>Phân quyền (Role)</TableHead>
+              <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                         Không tìm thấy người dùng nào.
                     </TableCell>
                 </TableRow>
@@ -149,6 +153,17 @@ export default async function UsersPage({
                             defaultValue={user.role} 
                             isCurrentUser={session.user.id === user.id}
                         />
+                    </TableCell>
+                    
+                    {/* Cột 5: Hành động bổ sung */}
+                    <TableCell className="text-right">
+                        {user.role === "USER" && (
+                            <UserVoucherDialog 
+                                userId={user.id} 
+                                userName={user.name || user.email} 
+                                vouchers={vouchers}
+                            />
+                        )}
                     </TableCell>
                 </TableRow>
                 ))

@@ -14,7 +14,7 @@ import {
   DialogDescription 
 } from "@/components/ui/dialog"; 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Mail, Edit, Trash2, Power } from "lucide-react";
+import { MoreHorizontal, Plus, Mail, Edit, Trash2, Power, User as UserIcon, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { VoucherForm } from "./voucher-form";
 import { deleteVoucher, toggleVoucherStatus, sendVoucherToUsers } from "@/actions/admin/voucher"; // Nhớ import đúng hàm sendVoucherToUsers
@@ -50,6 +50,7 @@ export const VoucherClient = ({ data }: { data: any[] }) => {
             <TableRow>
               <TableHead>Mã Code</TableHead>
               <TableHead>Giảm giá</TableHead>
+              <TableHead>Dành cho</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead className="text-right">Thao tác</TableHead>
             </TableRow>
@@ -67,6 +68,19 @@ export const VoucherClient = ({ data }: { data: any[] }) => {
                     <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
                       {Number(v.discountValue).toLocaleString()}đ
                     </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {v.user ? (
+                    <div className="flex items-center gap-2 text-sm text-purple-700 font-medium">
+                        <UserIcon className="h-4 w-4" />
+                        <span className="max-w-[120px] truncate">{v.user.name || v.user.email}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-slate-500 italic">
+                        <Globe className="h-4 w-4" />
+                        <span>Công khai</span>
+                    </div>
                   )}
                 </TableCell>
                 <TableCell>

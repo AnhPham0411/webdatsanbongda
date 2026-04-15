@@ -96,6 +96,13 @@ const routes = [
     roles: ["ADMIN", "STAFF"],
   },
   {
+    label: "Mã giảm giá",
+    icon: TicketPercent,
+    href: "/admin/voucher",
+    color: "text-amber-500",
+    roles: ["ADMIN"],
+  },
+  {
     label: "Cài đặt",
     icon: Settings,
     href: "/admin/settings",

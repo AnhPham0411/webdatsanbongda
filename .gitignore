@@ -45,5 +45,5 @@ next-env.d.ts
 # temporary and irrelevant files
 out.txt
 seed_output.log
-CodeBase.txt
 /tmp/
+/public/uploads/

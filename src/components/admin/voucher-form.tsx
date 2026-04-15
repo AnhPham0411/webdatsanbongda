@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createVoucher, updateVoucher } from "@/actions/admin/voucher";
+import { getUsersOnly } from "@/actions/admin/users";
 import { toast } from "sonner";
 import { 
   CalendarIcon, 
@@ -29,7 +30,8 @@ import {
   Percent, 
   Banknote, 
   Hash, 
-  Clock 
+  Clock,
+  User as UserIcon 
 } from "lucide-react";
 
 export const VoucherForm = ({
@@ -40,6 +42,15 @@ export const VoucherForm = ({
   onSuccess: () => void;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const data = await getUsersOnly();
+      setUsers(data);
+    };
+    fetchUsers();
+  }, []);
 
   // Helper: Format ngày cho input date
   const formatDate = (date: any) => {
@@ -56,6 +67,7 @@ export const VoucherForm = ({
       usageLimit: initialData?.usageLimit || 0, // 0 = Không giới hạn
       startDate: formatDate(initialData?.startDate),
       endDate: formatDate(initialData?.endDate),
+      userId: initialData?.userId || "all",
     },
   });
 
@@ -71,6 +83,7 @@ export const VoucherForm = ({
         discountValue: Number(values.discountValue),
         minOrderValue: Number(values.minOrderValue),
         usageLimit: Number(values.usageLimit) > 0 ? Number(values.usageLimit) : null,
+        userId: values.userId === "all" ? null : values.userId,
       };
 
       const res = initialData
@@ -115,6 +128,41 @@ export const VoucherForm = ({
                 </FormControl>
                 <FormDescription className="text-xs">
                   Mã phải là duy nhất và viết hoa không dấu.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="userId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  <UserIcon className="w-4 h-4 text-purple-600" /> Dành cho khách hàng
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn khách hàng được tặng" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả khách hàng (Công khai)</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription className="text-xs">
+                  Nếu chọn khách hàng cụ thể, mã này sẽ chỉ dành riêng cho họ.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -58,13 +58,13 @@ export const replyToInquiry = async (
 };
 
 export const deleteInquiry = async (id: string) => {
-    try {
-        await db.inquiry.delete({
-            where: { id }
-        });
-        revalidatePath("/admin/inquiries");
-        return { success: "Đã xóa yêu cầu thành công." };
-    } catch (error) {
-        return { error: "Không thể xóa yêu cầu này." };
-    }
+  try {
+    await db.inquiry.delete({
+      where: { id }
+    });
+    revalidatePath("/admin/inquiries");
+    return { success: "Đã xóa yêu cầu thành công." };
+  } catch (error) {
+    return { error: "Không thể xóa yêu cầu này." };
+  }
 }

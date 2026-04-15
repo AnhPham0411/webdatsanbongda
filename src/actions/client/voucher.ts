@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export const checkVoucher = async (code: string, currentTotal: number) => {
   try {
@@ -17,6 +18,14 @@ export const checkVoucher = async (code: string, currentTotal: number) => {
     // 2. Các bước kiểm tra hợp lệ
     if (!voucher || !voucher.isActive) {
       return { error: "Mã giảm giá không tồn tại hoặc đã bị khóa!" };
+    }
+
+    // 2.1 Kiểm tra nếu mã dành riêng cho ai đó
+    if (voucher.userId) {
+        const session = await auth();
+        if (!session?.user?.id || session.user.id !== voucher.userId) {
+            return { error: "Mã này là quà tặng dành riêng cho khách hàng khác!" };
+        }
     }
 
     // --- 👇 SỬA LỖI NGÀY GIỜ (QUAN TRỌNG) 👇 ---

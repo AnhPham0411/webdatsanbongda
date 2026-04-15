@@ -1,0 +1,66 @@
+BÁO CÁO TOÀN DIỆN ĐỒ ÁN TỐT NGHIỆP CNTT
+ĐỀ TÀI: PHÁT TRIỂN HỆ THỐNG QUẢN LÝ VÀ ĐẶT SÂN BÓNG ĐÁ TRỰC TUYẾN
+-----------------------------------------------------------------------
+SINH VIÊN THỰC HIỆN: [Tên của bạn]
+MSSV: [Mã số sinh viên]
+VAI TRÒ: Sinh viên năm 4 - Fullstack Developer
+HỆ ĐÀO TẠO: Kỹ sư Công nghệ thông tin
+
+1. GIỚI THIỆU DỰ ÁN
+Dự án được xây dựng nhằm giải quyết bài toán cốt lõi trong quản lý thể thao phong trào: Kết nối chủ sân và người chơi bóng. Hệ thống giúp loại bỏ quy trình đặt sân thủ công, tối ưu hóa công suất vận hành sân bóng và nâng cao tính chuyên nghiệp cho các đơn vị kinh doanh.
+
+2. KIẾN TRÚC VÀ CÔNG NGHỆ (TECHNICAL ARCHITECTURE)
+- Kiến trúc: Next.js 16 (App Router), kiến trúc Server-Side Rendering (SSR) kết hợp Client-Side Interactivity.
+- Phía máy chủ: Node.js, NextAuth cho Authentication, Prisma ORM cho Database Access.
+- Phía máy khách: React 19, Tailwind CSS 4, Radix UI cho các thành phần Accessible UI.
+- Quản lý trạng thái: Zustand (Global State) và React Hook Form (Form State).
+- Cơ sở dữ liệu: MySQL/PostgreSQL (được trừu tượng hóa qua Prisma).
+
+-----------------------------------------------------------------------
+2.2 TỔNG QUAN CHỨC NĂNG
+Hệ thống được thiết kế với tính module hóa cao, bao gồm:
+
+2.2.1 Biểu đồ use case tổng quát
+- Người dùng (User): Đăng ký/Đăng nhập, tìm kiếm sân theo khu vực/loại sân, chọn khung giờ trống, đặt chỗ, áp dụng mã giảm giá (Voucher), quản lý đơn đặt, thanh toán QR, nhận thông báo (Notification), gửi yêu cầu hỗ trợ, đánh giá sân (Review).
+- Nhân viên (Staff): Tiếp nhận yêu cầu, hỗ trợ khách tại sân, xác nhận thanh toán qua ảnh minh chứng, cập nhật trạng thái sân thực tế.
+- Quản trị viên (Admin): Quản trị toàn bộ danh mục tài nguyên (Sân, Loại sân, Vị trí, Tiện ích), quản lý người dùng, thiết lập chiến dịch Voucher (Gửi mã cho User cụ thể), phản hồi yêu cầu hỗ trợ (CRM), phản hồi đánh giá khách hàng (Review Reply), cấu hình tham số hệ thống (Settings), theo dõi Dashboard thống kê doanh thu theo thời gian thực.
+
+2.2.2 Quy trình nghiệp vụ cốt lõi
+1. Người dùng chọn Sân & Ngày -> Hệ thống hiển thị TimeSlot khả dụng dựa trên dữ liệu thật.
+2. Người dùng Đặt sân & Áp dụng Voucher -> Hệ thống kiểm tra điều kiện mã (Hạn dùng, số lượng, giá trị tối thiểu), khóa Slot tạm thời và tạo đơn PENDING.
+3. Người dùng Thanh toán & Gửi minh chứng (Upload Bill) -> Hệ thống chuyển sang trạng thái "Xác nhận ảo" (Giữ chỗ vĩnh viễn), Admin nhận thông báo tức thì.
+4. Admin xác duyệt -> Hệ thống chuyển trạng thái CONFIRMED, gửi email xác nhận và kích hoạt dịch vụ.
+5. Quy trình Hủy sân: Hệ thống tự động kiểm tra tham số `cancelBeforeHours`. Nếu còn trong thời hạn cho phép, User có quyền tự hủy đơn.
+
+-----------------------------------------------------------------------
+3. PHÂN TÍCH CƠ SỞ DỮ LIỆU (DATABASE DESIGN)
+Hệ thống gồm hơn 20 bảng liên kết chặt chẽ, tối ưu hóa cho hiệu năng và mở rộng:
+- User - Role: Phân cấp quyền hạn (Admin, Staff, User).
+- Court - CourtType - Location: Phân cấp tài nguyên địa lý và loại hình (Sân 5-7-11).
+- Booking - TimeSlot: Trung tâm của logic đặt chỗ, xử lý xung đột thời gian (Concurrency).
+- Voucher: Lưu trữ thông tin khuyến mãi, loại giảm giá (Cố định/Phần trăm), giới hạn sử dụng.
+- Notification: Hệ thống thông báo người dùng về lịch đặt, khuyến mãi mới, hoặc cập nhật trạng thái đơn.
+- Inquiry: Lưu trữ các yêu cầu hỗ trợ, thắc mắc từ khách hàng (Hệ thống CRM thu nhỏ).
+- Settings: Cấu hình linh hoạt các tham số: Tên site, Logo, Giờ hoạt động, Chính sách bảo mật và Thời gian hủy sân tối thiểu.
+- ExtraService: Quản lý các dịch vụ đi kèm (Thuê áo pitch, nước uống, trọng tài).
+
+-----------------------------------------------------------------------
+4. ĐIỂM SÁNG KỸ THUẬT & GIẢI PHÁP
+- Giải pháp Concurrency: Sử dụng Database Transactions kết hợp với cơ chế giữ chỗ 10 phút (Smart Hold) để ngăn chặn việc tranh chấp khung giờ.
+- Giao diện Premium: Thiết kế hiện đại (Glassmorphism), sử dụng Tailwind 4, bảng màu Emerald chuyên sâu cho thể thao, tối ưu UI cho cả thiết bị di động (Responsive).
+- Hệ thống Dashbord: Trực quan hóa dữ liệu bằng Recharts, phân tích xu hướng đặt sân và doanh thu theo ngày/tháng/loại sân.
+- Voucher Engine: Thuật toán kiểm tra điều kiện Voucher linh hoạt, hỗ trợ phát hành voucher riêng biệt cho từng cá nhân hoặc công khai toàn sàn.
+- CRM & Support: Tích hợp trình quản lý yêu cầu (Inquiry) và phản hồi đánh giá (Review Reply) giúp tăng cường tương tác và uy tín của sân bóng.
+- Bảo mật mạnh mẽ: Bảo vệ các API và Route nhạy cảm bằng NextAuth Middleware, ngăn chặn truy cập trái phép bằng logic Server-side validation.
+
+-----------------------------------------------------------------------
+5. HƯỚNG DẪN CÀI ĐẶT CHO HỘI ĐỒNG (QUICK START)
+1. Cài đặt các thư viện: `npm install`
+2. Cấu hình biến môi trường trong file `.env` (DATABASE_URL, NEXTAUTH_SECRET, EMAIL_SERVER).
+3. Khởi tạo Database: `npx prisma db push`.
+4. Tạo dữ liệu mẫu: `npx prisma db seed` (Để khởi tạo Admin mặc định và Môn bóng đá).
+5. Chạy dự án: `npm run dev`.
+
+-----------------------------------------------------------------------
+KẾT LUẬN: Dự án đã hoàn thành đầy đủ các tiêu chí của một đồ án tốt nghiệp chuyên ngành Phần mềm, đảm bảo cả tính học thuật lẫn tính ứng dụng thực tiễn cao.
+-----------------------------------------------------------------------

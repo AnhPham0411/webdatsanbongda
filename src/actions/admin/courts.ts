@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { broadcastNotification } from "@/actions/client/notifications";
 
 const CourtSchema = z.object({
   name: z.string().min(1, "Tên sân không được để trống"),
@@ -42,9 +43,17 @@ export const createCourt = async (values: z.infer<typeof CourtSchema>) => {
       },
     });
 
+    // Tự động thông báo cho tất cả người dùng về sân mới
+    await broadcastNotification({
+        title: "Sân bóng mới đã được thêm! ⚽",
+        message: `Chúng tôi vừa đưa vào hoạt động sân "${values.name}". Hãy trải nghiệm ngay!`,
+        type: "NEWS",
+        link: "/search"
+    });
+
     revalidatePath("/admin/courts");
     revalidatePath("/search");
-    return { success: "Tạo sân thành công!" };
+    return { success: "Tạo sân thành công và đã gửi thông báo!" };
   } catch (error) {
     return { error: "Lỗi hệ thống!" };
   }

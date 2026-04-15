@@ -1,97 +1,51 @@
-my-hotel/
-├── .env                       # Biến môi trường (DB, Auth Secret)
-├── package.json               # Các thư viện cần cài
-├── next.config.mjs            # Cấu hình Next.js
-├── tsconfig.json              # Cấu hình TypeScript
-├── tailwind.config.ts         # Cấu hình TailwindCSS
-├── middleware.ts              # Xử lý bảo vệ route (Chặn chưa login)
+web_san_bong/
+├── .env                       # Biến môi trường (DB, Auth Secret, Email Config)
+├── package.json               # Dependencies (Next.js, Prisma, Nodemailer, etc.)
 ├── prisma/
-│   ├── schema.prisma          # Database Schema (Final version)
-│   └── seed.ts                # Dữ liệu mẫu
-├── public/
-│   ├── images/                # Chứa ảnh upload
-│   └── uploads/               # Folder dự phòng
+│   ├── schema.prisma          # Database Schema (Booking, Voucher, Inquiry, Notification, etc.)
+│   └── seed.ts                # Dữ liệu mẫu khởi tạo hệ thống
 ├── src/
-│   ├── actions/               # [SERVER ACTIONS] - Logic Backend
-│   │   ├── auth.ts            # Login, Register, Logout
-│   │   ├── admin/             # Logic Admin
-│   │   │   ├── amenities.ts   # CRUD Tiện nghi
-│   │   │   ├── bookings.ts    # Duyệt đơn, Check-in
-│   │   │   ├── calendar.ts    # Gantt Chart Data
-│   │   │   ├── categories.ts  # CRUD Loại phòng
-│   │   │   ├── dashboard.ts   # Thống kê doanh thu
-│   │   │   ├── rooms.ts       # CRUD Phòng
-│   │   │   ├── users.ts       # Quản lý User
-│   │   │   └── pricing.ts     # Giá mùa vụ
-│   │   └── client/            # Logic Client
-│   │       ├── booking.ts     # Transaction đặt phòng
-│   │       ├── get-rooms.ts   # Tìm kiếm, Filter
-│   │       ├── profile.ts     # Update thông tin cá nhân
-│   │       └── reviews.ts     # Gửi đánh giá
-│   ├── app/                   # [ROUTING] - Pages
-│   │   ├── api/               # API Routes (Webhooks)
-│   │   │   ├── auth/[...nextauth]/route.ts
-│   │   │   └── upload/route.ts
-│   │   ├── (auth)/            # Layout Auth (Căn giữa)
-│   │   │   ├── layout.tsx
-│   │   │   ├── login/page.tsx
-│   │   │   ├── register/page.tsx
-│   │   │   └── error/page.tsx
-│   │   ├── (admin)/           # Layout Admin (Sidebar + Header)
-│   │   │   ├── layout.tsx
+│   ├── actions/               # [SERVER ACTIONS] - Tương tác Database từ Server Component
+│   │   ├── auth.ts            # Đăng ký, Đăng nhập, Đăng xuất (NextAuth)
+│   │   ├── admin/             # Logic dành cho Quản trị viên
+│   │   │   ├── dashboard.ts   # Thống kê doanh thu, tỷ lệ lấp đầy sân
+│   │   │   ├── categories.ts  # CRUD Loại sân (Sân 5, 7, 11)
+│   │   │   ├── courts.ts      # CRUD Sân bóng & Gửi thông báo sân mới
+│   │   │   ├── bookings.ts    # Quản lý đơn đặt sân, duyệt bill, hủy đơn
+│   │   │   ├── voucher.ts     # CMS Voucher: Tạo mã, gửi tặng khách hàng
+│   │   │   ├── settings.ts    # Cấu hình website (Logo, Tên, Giờ mở cửa, Quy chuẩn hủy sân)
+│   │   │   ├── reviews.ts     # Admin phản hồi đánh giá của khách
+│   │   │   ├── calendar.ts    # Lấy dữ liệu lịch đặt sân (TimeSlots)
+│   │   │   ├── users.ts       # Quản lý người dùng và phân quyền (Admin, Staff, User)
+│   │   │   ├── amenities.ts   # CRUD Tiện ích đi kèm (Wifi, Căng tin, Parking)
+│   │   │   └── locations.ts   # Quản lý cụm sân / vị trí địa lý
+│   │   └── client/            # Logic dành cho Người dùng
+│   │       ├── booking.ts     # Đặt sân, áp dụng voucher, hỗ trợ giữ chỗ 10p
+│   │       ├── voucher.ts     # Check mã giảm giá & Lấy voucher của tôi
+│   │       ├── contact.ts     # Gửi yêu cầu hỗ trợ (Inquiry)
+│   │       ├── reviews.ts     # Đánh giá sân sau khi trải nghiệm
+│   │       ├── notifications.ts # Quản lý thông báo
+│   │       └── search.ts      # Logic tìm kiếm & Filter sân nâng nâng cao
+│   ├── app/                   # [ROUTING - Next.js App Router]
+│   │   ├── (admin)/           # Dashboard Quản trị (Protected Routes)
 │   │   │   └── admin/
-│   │   │       ├── dashboard/page.tsx
-│   │   │       ├── rooms/
-│   │   │       │   ├── page.tsx
-│   │   │       │   ├── new/page.tsx
-│   │   │       │   └── [roomId]/page.tsx
-│   │   │       ├── categories/page.tsx
-│   │   │       ├── amenities/page.tsx
-│   │   │       ├── bookings/page.tsx
-│   │   │       ├── calendar/page.tsx
-│   │   │       ├── users/page.tsx
-│   │   │       ├── reviews/page.tsx
-│   │   │       └── settings/page.tsx
-│   │   └── (public)/          # Layout Public (Navbar + Footer)
-│   │       ├── layout.tsx
-│   │       ├── page.tsx       # Trang chủ
-│   │       ├── search/page.tsx
-│   │       ├── rooms/[roomId]/page.tsx
-│   │       ├── my-bookings/page.tsx
-│   │       └── profile/page.tsx
-│   ├── components/            # [UI COMPONENTS]
-│   │   ├── ui/                # Shadcn UI (Button, Input...)
-│   │   ├── admin/             # UI Admin
-│   │   │   ├── sidebar.tsx
-│   │   │   ├── navbar.tsx
-│   │   │   ├── overview-chart.tsx
-│   │   │   ├── room-form.tsx
-│   │   │   └── status-badge.tsx
-│   │   ├── client/            # UI Client
-│   │   │   ├── navbar.tsx
-│   │   │   ├── footer.tsx
-│   │   │   ├── hero.tsx
-│   │   │   ├── room-card.tsx
-│   │   │   ├── booking-form.tsx
-│   │   │   ├── search-filters.tsx
-│   │   │   └── reviews-list.tsx
-│   │   └── auth/              # UI Auth
-│   │       ├── login-form.tsx
-│   │       ├── register-form.tsx
-│   │       └── social-buttons.tsx
-│   ├── hooks/                 # Custom Hooks
-│   │   ├── use-current-user.ts
-│   │   └── use-cart.ts
-│   ├── lib/                   # Config & Utilities
-│   │   ├── db.ts              # Prisma Instance
-│   │   ├── auth.ts            # NextAuth Config
-│   │   ├── utils.ts           # Helper (cn, formatDate)
-│   │   └── tokens.ts          # Token helper
-│   ├── schemas/               # Zod Validations
-│   │   └── index.ts
-│   └── types/                 # TypeScript Types
-│       └── index.ts
+│   │   │       ├── bookings/  # Duyệt thanh toán (Xem ảnh Bill)
+│   │   │       ├── inquiries/ # Trình phản hồi khách hàng (CRM)
+│   │   │       ├── dashboard/ # Biểu đồ doanh thu Recharts
+│   │   │       └── settings/  # Cấu hình tham số hệ thống
+│   │   ├── (public)/          # Giao diện người dùng
+│   │   │   ├── courts/[id]/   # Booking Engine & Review Section
+│   │   │   └── my-bookings/   # Quản lý cá nhân & Upload minh chứng thanh toán
+│   ├── components/            # [UI COMPONENTS] - Reusable Shaden UI & Custom
+│   │   ├── admin/             # InquiryReplyForm, BookingActions, Sidebar
+│   │   └── client/            # CountdownClock, VoucherCard, NotificationBell
+│   ├── lib/                   # [LIBRARY & CONFIG]
+│   │   ├── db.ts              # Prisma Client Instance
+│   │   ├── mail.ts            # Nodemailer integration (Send email confirmation)
+│   │   └── auth.ts            # NextAuth Configuration (JWT, Callbacks)
 
-
-npm install next react react-dom next-auth@beta @prisma/client @hookform/resolvers/zod zod date-fns lucide-react recharts clsx tailwind-merge sonner bcryptjs
-npm install -D prisma types/node types/react types/bcryptjs
+# Cơ chế nghiệp vụ đặc biệt:
+1. Giữ chỗ thông minh (Smart Hold): Khóa slot 10p khi PENDING -> Auto mở nếu không upload bill.
+2. Xác nhận 2 bước: Khách upload ảnh Bill (Xác nhận ảo) -> Admin duyệt (Xác nhận thực).
+3. Voucher Engine: Hỗ trợ giảm % hoặc số tiền cố định, giới hạn đối tượng/số lượng.
+4. CRM tích hợp: Hệ thống Inquiry trực tuyến giúp phản hồi khách hàng ngay trên Dashboard.

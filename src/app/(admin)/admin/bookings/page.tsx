@@ -171,6 +171,7 @@ export default async function BookingsPage() {
                         paymentStatus={booking.paymentStatus}
                         totalPrice={Number(booking.totalPrice)} 
                         guestName={booking.guestName || booking.user?.name || "Khách hàng"}
+                        paymentBill={(booking as any).paymentBill}
                         // 4. Truyền dữ liệu an toàn vào component Thao tác
                         currentUserRole={session?.user?.role}
                     />

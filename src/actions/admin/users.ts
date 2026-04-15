@@ -44,3 +44,26 @@ export const updateUserRole = async (userId: string, newRole: UserRole) => {
     return { error: "Lỗi hệ thống khi cập nhật quyền!" };
   }
 };
+
+/**
+ * Lấy danh sách toàn bộ khách hàng (role: USER) 
+ * phục vụ cho việc gán Voucher độc quyền.
+ */
+export const getUsersOnly = async () => {
+    try {
+        const users = await db.user.findMany({
+            where: { role: "USER" },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+            },
+            orderBy: { name: 'asc' }
+        });
+        return users;
+    } catch (error) {
+        console.error("[GET_USERS_ONLY_ERROR]", error);
+        return [];
+    }
+};

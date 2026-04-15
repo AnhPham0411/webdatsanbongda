@@ -11,9 +11,11 @@ import {
   CreditCard,
   Trash2,
   Copy,
-  QrCode
+  QrCode,
+  Image as ImageIcon
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BookingStatus, PaymentStatus, UserRole } from "@prisma/client"; // Import thêm UserRole
 import { PaymentQRModal } from "@/components/admin/payment-qr-modal";
 import {
@@ -27,6 +29,13 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 import { updateBookingStatus, updatePaymentStatus, deleteBooking } from "@/actions/admin/bookings";
@@ -37,6 +46,7 @@ interface BookingActionsProps {
   paymentStatus: PaymentStatus;
   totalPrice: number;
   guestName: string;
+  paymentBill?: string | null;
   currentUserRole?: string; // 👈 Thêm prop nhận Role
 }
 
@@ -46,6 +56,7 @@ export const BookingActions = ({
   paymentStatus, 
   totalPrice, 
   guestName,
+  paymentBill,
   currentUserRole // 👈 Destructure role
 }: BookingActionsProps) => {
   const router = useRouter();
@@ -113,6 +124,26 @@ export const BookingActions = ({
           <DropdownMenuItem onClick={onCopy} className="cursor-pointer">
             <Copy className="mr-2 h-4 w-4" /> Copy Mã đơn
           </DropdownMenuItem>
+
+          {paymentBill && (
+             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <div className="flex items-center w-full cursor-pointer text-emerald-600 font-bold">
+                            <ImageIcon className="mr-2 h-4 w-4" /> Xem Bill khách gửi
+                        </div>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Minh chứng thanh toán từ khách</DialogTitle>
+                        </DialogHeader>
+                        <div className="relative aspect-[3/4] w-full mt-2 rounded-lg overflow-hidden border">
+                            <Image src={paymentBill} alt="Payment Bill" fill className="object-contain" />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+             </DropdownMenuItem>
+          )}
           
           <DropdownMenuSeparator />
           
