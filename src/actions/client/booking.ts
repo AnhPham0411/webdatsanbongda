@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
+import { getSettings } from "@/actions/admin/settings";
 
 const BookingSchema = z.object({
   courtId: z.string(),
@@ -25,6 +26,14 @@ export const createBooking = async (values: z.infer<typeof BookingSchema>) => {
     const session = await auth();
     if (!session?.user?.id || !session?.user?.email) {
       return { error: "Bạn cần đăng nhập để thực hiện đặt sân!" };
+    }
+
+    const canBypassMaintenance = session.user.role === "ADMIN" || session.user.role === "STAFF";
+
+    // Kiểm tra chế độ bảo trì
+    const settings = await getSettings();
+    if (settings?.maintenanceMode && !canBypassMaintenance) {
+      return { error: "Hệ thống đang bảo trì, vui lòng quay lại sau ít phút!" };
     }
 
     const userId = session.user.id;
@@ -168,6 +177,14 @@ export const cancelBooking = async (bookingId: string) => {
     const session = await auth();
     if (!session?.user?.id) return { error: "Bạn chưa đăng nhập!" };
 
+    const canBypassMaintenance = session.user.role === "ADMIN" || session.user.role === "STAFF";
+
+    // Kiểm tra chế độ bảo trì
+    const settings = await getSettings();
+    if (settings?.maintenanceMode && !canBypassMaintenance) {
+      return { error: "Hệ thống đang bảo trì, vui lòng quay lại sau ít phút!" };
+    }
+
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: { timeSlot: true }
@@ -295,6 +312,7 @@ export const deleteUserBooking = async (bookingId: string) => {
 
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
+      include: { timeSlot: true }
     });
 
     if (!booking) return { error: "Không tìm thấy đơn đặt sân!" };
@@ -303,9 +321,19 @@ export const deleteUserBooking = async (bookingId: string) => {
       return { error: "Bạn không có quyền thực hiện hành động này!" };
     }
 
-    // Chỉ cho phép xóa nếu đã xong hoặc đã hủy
-    if (!["CHECKED_OUT", "CANCELLED"].includes(booking.status)) {
-      return { error: "Chỉ có thể xóa các đơn đã hoàn thành hoặc đã hủy." };
+    // Kiểm tra xem đơn có quá hạn chưa (PENDING và đã qua giờ đá)
+    let isExpired = false;
+    if (booking.status === "PENDING" && booking.timeSlot) {
+      const matchEnd = new Date(booking.date);
+      const timeEnd = new Date(booking.timeSlot.endTime);
+      matchEnd.setHours(timeEnd.getUTCHours(), timeEnd.getUTCMinutes(), 0, 0);
+      isExpired = matchEnd.getTime() < Date.now();
+    }
+
+    const canDelete = ["CHECKED_OUT", "CANCELLED"].includes(booking.status) || isExpired;
+
+    if (!canDelete) {
+      return { error: "Chỉ có thể xóa các đơn đã hoàn thành, đã hủy hoặc đã quá hạn." };
     }
 
     await db.$transaction(async (tx) => {

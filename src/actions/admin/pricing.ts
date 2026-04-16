@@ -9,7 +9,10 @@ export async function getSeasonalPrices(courtId: string) {
       where: { courtId },
       orderBy: { startDate: "asc" }
     });
-    return prices;
+    return prices.map(p => ({
+      ...p,
+      price: Number(p.price)
+    }));
   } catch (error) {
     console.error("GET_SEASONAL_PRICES_ERROR", error);
     return [];

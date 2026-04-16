@@ -7,10 +7,17 @@ import { format } from "date-fns";
 import { createNotification, broadcastNotification } from "@/actions/client/notifications";
 
 export const getVouchers = async () => {
-  return await db.voucher.findMany({ 
+  const vouchers = await db.voucher.findMany({ 
     include: { user: { select: { name: true, email: true } } },
     orderBy: { createdAt: "desc" } 
   });
+
+  return vouchers.map(voucher => ({
+    ...voucher,
+    discountValue: Number(voucher.discountValue),
+    minOrderValue: voucher.minOrderValue ? Number(voucher.minOrderValue) : 0,
+    maxDiscount: voucher.maxDiscount ? Number(voucher.maxDiscount) : null,
+  }));
 };
 
 export const createVoucher = async (data: any) => {
@@ -45,16 +52,35 @@ export const createVoucher = async (data: any) => {
 
 export const updateVoucher = async (id: string, data: any) => {
   try {
+    const oldVoucher = await db.voucher.findUnique({ where: { id } });
+    if (!oldVoucher) return { error: "Không tìm thấy voucher!" };
+
     const { userId, ...rest } = data;
-    await db.voucher.update({
+    const newStartDate = new Date(data.startDate);
+    const newEndDate = new Date(data.endDate);
+
+    const voucher = await db.voucher.update({
       where: { id },
       data: {
         ...rest,
         userId: userId || null,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: newStartDate,
+        endDate: newEndDate,
       },
     });
+
+    // Kiểm tra các điều kiện để gửi lại thông báo:
+    // 1. Thay đổi mức giảm giá hoặc loại giảm giá
+    // 2. Gia hạn ngày kết thúc
+    // 3. Kích hoạt lại voucher (từ false sang true)
+    const discountChanged = oldVoucher.discountValue.toNumber() !== Number(data.discountValue) || oldVoucher.discountType !== data.discountType;
+    const extended = newEndDate > new Date(oldVoucher.endDate);
+    const reactivated = !oldVoucher.isActive && data.isActive;
+
+    if (discountChanged || extended || reactivated) {
+      await sendVoucherToUsers(voucher.id, voucher.userId || undefined);
+    }
+
     revalidatePath("/admin/vouchers");
     return { success: "Cập nhật thành công!" };
   } catch (error) {
@@ -86,7 +112,10 @@ export const sendVoucherToUsers = async (voucherId: string, targetUserId?: strin
       ? `${voucher.discountValue}%` 
       : `${Number(voucher.discountValue).toLocaleString("vi-VN")} VNĐ`;
     
+    const startDateFormatted = format(new Date(voucher.startDate), "dd/MM/yyyy");
     const endDateFormatted = format(new Date(voucher.endDate), "dd/MM/yyyy");
+
+    const messageContent = `Bạn nhận được mã ưu đãi **${voucher.code}** giảm ${discountText}. Có hiệu lực từ ngày ${startDateFormatted} đến ${endDateFormatted}.`;
 
     // 2. Trường hợp GỬI RIÊNG LẺ (Khách hàng thân thiết)
     if (targetUserId) {
@@ -94,13 +123,13 @@ export const sendVoucherToUsers = async (voucherId: string, targetUserId?: strin
         if (!user) return { error: "Không tìm thấy khách hàng!" };
 
         // Gửi Email
-        await sendVoucherNotification(user.email, voucher.code, discountText, endDateFormatted);
+        await sendVoucherNotification(user.email, voucher.code, discountText, startDateFormatted, endDateFormatted);
         
         // Gửi Thông báo trên web
         await createNotification({
             userId: user.id,
             title: "Quà tặng dành riêng cho bạn! 🎁",
-            message: `Bạn nhận được mã ưu đãi ${voucher.code} giảm ${discountText}. Hạn dùng đến ${endDateFormatted}.`,
+            message: messageContent,
             type: "VOUCHER",
             link: "/profile"
         });
@@ -118,14 +147,14 @@ export const sendVoucherToUsers = async (voucherId: string, targetUserId?: strin
 
     // Gửi Email hàng loạt
     const emailPromises = users.map((u) => 
-      sendVoucherNotification(u.email, voucher.code, discountText, endDateFormatted)
+      sendVoucherNotification(u.email, voucher.code, discountText, startDateFormatted, endDateFormatted)
     );
     await Promise.all(emailPromises);
 
     // Gửi Thông báo hệ thống hàng loạt
     await broadcastNotification({
         title: "Ưu đãi mới từ Sport Arena! 🎊",
-        message: `Tết đến xuân về, nhận ngay mã ${voucher.code} giảm ${discountText} cho mọi đơn đặt sân.`,
+        message: messageContent,
         type: "VOUCHER",
         link: "/search"
     });
@@ -135,4 +164,4 @@ export const sendVoucherToUsers = async (voucherId: string, targetUserId?: strin
     console.error("Lỗi gửi mail voucher:", error);
     return { error: "Có lỗi xảy ra trong quá trình gửi mail." };
   }
-};
+};

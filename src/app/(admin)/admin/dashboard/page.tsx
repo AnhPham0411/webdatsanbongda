@@ -6,6 +6,7 @@
 import { getDashboardStats } from "@/actions/admin/dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import OverviewChart from "@/components/admin/overview-chart";
+import { LiveRefresh } from "@/components/admin/live-refresh";
 import { 
   Users, 
   CalendarDays, 
@@ -51,6 +52,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
+      <LiveRefresh interval={30000} />
       
       {/* Header */}
       <div className="flex items-center justify-between space-y-2">
@@ -115,19 +117,25 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-purple-200 shadow-sm hover:shadow-md transition-all bg-gradient-to-br from-white to-purple-50/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold text-slate-600">Khách hàng nổi bật</CardTitle>
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <Users className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-bold text-slate-600">Top 1 Chi tiêu</CardTitle>
+            <div className="p-2 bg-purple-100 rounded-lg animate-pulse">
+              <Trophy className="h-4 w-4 text-purple-700" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-slate-900 truncate">
-              {data.topBooker?.name || "Chưa có"}
+            <div className="flex items-center gap-2">
+               <div className="text-lg font-bold text-slate-900 truncate max-w-[150px]">
+                {data.topBooker?.name || "Chưa có"}
+              </div>
+              <Badge className="bg-amber-400 text-amber-900 border-none hover:bg-amber-400 text-[10px] px-1 h-4">#1 VIP</Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-               Thanh toán: <span className="font-bold text-purple-600">{formatCurrency(data.topBooker?.spent || 0)}</span>
+               Tổng: <span className="font-bold text-purple-600">{formatCurrency(data.topBooker?.spent || 0)}</span>
+            </p>
+            <p className="text-[10px] text-slate-400 mt-2 italic">
+               * Xem bảng xếp hạng Top 3 bên dưới
             </p>
           </CardContent>
         </Card>
@@ -250,36 +258,65 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Top Bookers */}
-        <Card className="border-none shadow-sm">
-          <CardHeader className="flex flex-row items-center gap-2">
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <Users className="h-4 w-4 text-amber-600" />
+        <Card className="border-amber-100 shadow-lg bg-gradient-to-b from-white to-amber-50/20">
+          <CardHeader className="flex flex-row items-center gap-3 border-b border-amber-100/50 pb-4">
+            <div className="p-2.5 bg-amber-500 rounded-xl shadow-inner">
+              <Trophy className="h-5 w-5 text-white" />
             </div>
-            <CardTitle className="text-md font-bold">Khách hàng nổi bật</CardTitle>
+            <div>
+              <CardTitle className="text-md font-bold text-slate-800">Top 3 Khách hàng nổi bật</CardTitle>
+              <CardDescription className="text-[10px]">Xếp hạng theo mức độ chịu chi</CardDescription>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="pt-6">
+            <div className="space-y-6">
               {data.topBookers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4 italic">Không có dữ liệu</p>
               ) : (
-                data.topBookers.map((user: any) => (
-                  <div key={user.email} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-[10px] bg-slate-100">{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis max-w-[100px]">{user.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{user.count} bookings</p>
+                data.topBookers.slice(0, 3).map((user: any, index: number) => (
+                  <div key={user.email} className="flex items-center justify-between relative group">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar className={`h-12 w-12 border-2 ${
+                            index === 0 ? "border-amber-400" : 
+                            index === 1 ? "border-slate-300" : 
+                            "border-orange-300"
+                        } shadow-md`}>
+                            <AvatarImage src={user.image || ""} />
+                            <AvatarFallback className="text-sm bg-slate-100 font-bold">{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className={`absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border ${
+                            index === 0 ? "bg-amber-400 border-amber-500 text-amber-950" : 
+                            index === 1 ? "bg-slate-200 border-slate-300 text-slate-700" : 
+                            "bg-orange-200 border-orange-300 text-orange-900"
+                        }`}>
+                            {index + 1}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                           <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-slate-100">{user.count} lượt đặt</Badge>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-sm font-bold text-blue-600 pl-2">
-                      {formatCurrency(user.spent)}
+                    <div className="text-right">
+                      <div className={`text-sm font-black ${
+                        index === 0 ? "text-amber-600" : "text-slate-600"
+                      }`}>
+                        {formatCurrency(user.spent)}
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium">Đã thanh toán</p>
                     </div>
                   </div>
                 ))
               )}
             </div>
+            {data.topBookers.length > 0 && (
+              <div className="mt-8 pt-4 border-t border-amber-100/50 text-center">
+                 <p className="text-[10px] text-slate-400 italic font-medium">Dữ liệu được cập nhật theo thời gian thực</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

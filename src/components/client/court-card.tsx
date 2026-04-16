@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star, Check } from "lucide-react"; 
 import { WishlistButton } from "@/components/client/wishlist-button";
+import { useTranslations } from "next-intl";
 
 interface CourtCardProps {
   court: SafeCourt & { isLiked?: boolean };
@@ -16,6 +17,7 @@ interface CourtCardProps {
 }
 
 export const CourtCard = ({ court, currentUser }: CourtCardProps) => {
+  const t = useTranslations("CourtCard");
   const address = (court.courtType as any).location?.name || court.courtType.description || "";
 
   // 2. Rating
@@ -32,7 +34,7 @@ export const CourtCard = ({ court, currentUser }: CourtCardProps) => {
          {/* Badge: Hết sân - Moved inside content */}
          {!court.isAvailable && (
           <div className="absolute top-6 right-6 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-            Hết sân
+            {t("unavailable")}
           </div>
         )}
 
@@ -61,7 +63,7 @@ export const CourtCard = ({ court, currentUser }: CourtCardProps) => {
         <div className="flex items-center text-slate-500 text-sm mb-4">
           <Star className="w-4 h-4 mr-1.5 text-yellow-500 fill-yellow-500" />
           <span className="font-bold text-slate-800">{avgRating}</span>
-          <span className="ml-1">({totalReviews} đánh giá)</span>
+          <span className="ml-1">({totalReviews} {t("reviews")})</span>
         </div>
 
         <p className="line-clamp-2 text-sm text-slate-600 mb-6 flex-1 leading-relaxed">
@@ -73,7 +75,7 @@ export const CourtCard = ({ court, currentUser }: CourtCardProps) => {
           <span className="text-xl font-bold text-blue-600">
             {formatCurrency(Number(court.courtType.basePrice))}
           </span>
-          <span className="text-xs text-slate-400 font-medium">/ ca</span>
+          <span className="text-xs text-slate-400 font-medium">{t("perSlot")}</span>
         </div>
       </CardContent>
 
@@ -81,7 +83,7 @@ export const CourtCard = ({ court, currentUser }: CourtCardProps) => {
       <CardFooter className="p-5 pt-0">
         <Button asChild className="w-full h-11 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-medium shadow-md shadow-slate-200 transition-all duration-300">
           <Link href={`/courts/${court.id}`}>
-            Xem chi tiết
+            {t("viewDetails")}
           </Link>
         </Button>
       </CardFooter>

@@ -20,8 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { createVoucher, updateVoucher } from "@/actions/admin/voucher";
-import { getUsersOnly } from "@/actions/admin/users";
+import { getUsersOnly, getTopSpenders } from "@/actions/admin/users";
 import { toast } from "sonner";
 import { 
   CalendarIcon, 
@@ -43,13 +46,20 @@ export const VoucherForm = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [topSpenders, setTopSpenders] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const data = await getUsersOnly();
-      setUsers(data);
+    const fetchData = async () => {
+      const [allUsers, rankedUsers] = await Promise.all([
+        getUsersOnly(),
+        getTopSpenders()
+      ]);
+      setUsers(allUsers);
+      setTopSpenders(rankedUsers);
     };
-    fetchUsers();
+    fetchData();
   }, []);
 
   // Helper: Format ngày cho input date
@@ -138,31 +148,123 @@ export const VoucherForm = ({
             control={form.control}
             name="userId"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2">
+              <FormItem className="flex flex-col">
+                <FormLabel className="flex items-center gap-2 mb-1">
                   <UserIcon className="w-4 h-4 text-purple-600" /> Dành cho khách hàng
                 </FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isLoading}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn khách hàng được tặng" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả khách hàng (Công khai)</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name || user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={isLoading}
+                      >
+                        {field.value === "all" ? (
+                          "Tất cả khách hàng (Công khai)"
+                        ) : (
+                          users.find((u) => u.id === field.value)?.name || 
+                          users.find((u) => u.id === field.value)?.email || 
+                          "Chọn khách hàng..."
+                        )}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <div className="flex flex-col">
+                      <div className="flex items-center border-b px-3 py-2">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input
+                          className="flex h-8 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="Tìm tên hoặc email..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="max-h-[300px] overflow-y-auto p-1">
+                        {!searchTerm && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start font-normal"
+                              onClick={() => {
+                                field.onChange("all");
+                                setIsPopoverOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", field.value === "all" ? "opacity-100" : "opacity-0")} />
+                              Tất cả khách hàng (Công khai)
+                            </Button>
+
+                            {topSpenders.length > 0 && (
+                              <div className="mt-2">
+                                <div className="px-2 py-1.5 text-[10px] font-bold uppercase text-amber-600 tracking-wider">Top chi tiêu (VIP)</div>
+                                {topSpenders.map((user, index) => (
+                                  <Button
+                                    key={`top-${user.id}`}
+                                    variant="ghost"
+                                    className="w-full justify-start font-normal text-emerald-700"
+                                    onClick={() => {
+                                      field.onChange(user.id);
+                                      setIsPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4", field.value === user.id ? "opacity-100" : "opacity-0")} />
+                                    ⭐ Top {index + 1}: {user.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+                            <div className="h-px bg-slate-100 my-1" />
+                          </>
+                        )}
+
+                        {searchTerm ? (
+                          <div className="space-y-1">
+                             <div className="px-2 py-1.5 text-[10px] font-bold uppercase text-slate-400 tracking-wider">Kết quả tìm kiếm</div>
+                             {users
+                              .filter((u) => 
+                                (u.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+                                (u.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+                              )
+                              .slice(0, 10) // Giới hạn 10 kết quả cho nhanh
+                              .map((user) => (
+                                <Button
+                                  key={user.id}
+                                  variant="ghost"
+                                  className="w-full justify-start font-normal"
+                                  onClick={() => {
+                                    field.onChange(user.id);
+                                    setIsPopoverOpen(false);
+                                    setSearchTerm("");
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", field.value === user.id ? "opacity-100" : "opacity-0")} />
+                                  <div className="flex flex-col items-start overflow-hidden">
+                                     <span className="truncate w-full">{user.name}</span>
+                                     <span className="text-[10px] text-muted-foreground truncate w-full">{user.email}</span>
+                                  </div>
+                                </Button>
+                              ))}
+                             {users.filter((u) => (u.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || (u.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())).length === 0 && (
+                                <div className="p-4 text-center text-sm text-slate-500">Không tìm thấy khách hàng nào</div>
+                             )}
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center text-[10px] text-slate-400 italic">Nhập tên để tìm thêm khách hàng...</div>
+                        )}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <FormDescription className="text-xs">
-                  Nếu chọn khách hàng cụ thể, mã này sẽ chỉ dành riêng cho họ.
+                  Chọn khách hàng cụ thể hoặc dùng tính năng tìm kiếm.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

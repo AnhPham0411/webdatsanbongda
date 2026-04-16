@@ -134,6 +134,7 @@ export const sendVoucherNotification = async (
   email: string,
   code: string,
   discountText: string,
+  startDate: string,
   endDate: string
 ) => {
   const html = `
@@ -150,7 +151,7 @@ export const sendVoucherNotification = async (
             <p style="margin: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Mã giảm giá</p>
             <h1 style="margin: 10px 0; color: ${colors.secondary}; font-size: 32px; letter-spacing: 3px;">${code}</h1>
             <p style="margin: 5px 0 0 0; color: ${colors.success}; font-weight: bold; font-size: 18px;">Giảm ${discountText}</p>
-            <p style="margin-top: 15px; font-size: 13px; color: ${colors.danger};">Hạn sử dụng: ${endDate}</p>
+            <p style="margin-top: 15px; font-size: 13px; color: ${colors.text};">Có hiệu lực từ: <b>${startDate}</b> đến <b>${endDate}</b></p>
           </div>
 
           <p>Để sử dụng, hãy nhập mã này tại bước thanh toán khi đặt sân.</p>
@@ -170,6 +171,53 @@ export const sendVoucherNotification = async (
     from: `"Sport Arena" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: `🎁 Bạn nhận được mã giảm giá: ${code} - Sport Arena`,
+    html,
+  });
+};
+
+export const sendNewCourtEmail = async (
+  email: string,
+  details: {
+    name: string,
+    courtType: string,
+    image: string
+  }
+) => {
+  const html = `
+    <div style="background-color: ${colors.background}; padding: 40px 0; font-family: sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: ${colors.white}; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+        <div style="background-color: ${colors.primary}; padding: 30px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Sân Bóng Mới Ra Mắt! ⚽</h1>
+        </div>
+        <div style="padding: 40px 30px; color: ${colors.text}; text-align: center;">
+          <h2 style="color: ${colors.secondary};">Chào bạn! 🎊</h2>
+          <p>Sport Arena vừa đưa vào hoạt động một sân bóng mới cực chất để phục vụ anh em đam mê trái bóng tròn.</p>
+          
+          <div style="margin: 30px 0; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #f8fafc;">
+            <img src="${details.image}" alt="${details.name}" style="width: 100%; height: auto; display: block;" />
+            <div style="padding: 20px; text-align: left;">
+              <h3 style="margin: 0; color: ${colors.secondary}; font-size: 18px;">${details.name}</h3>
+              <p style="margin: 5px 0 0 0; color: ${colors.primary}; font-weight: bold;">Hạng sân: ${details.courtType}</p>
+            </div>
+          </div>
+
+          <p>Hãy là một trong những người đầu tiên trải nghiệm mặt cỏ mới tại ${details.name}.</p>
+          
+          <div style="margin-top: 30px;">
+            <a href="${domain}/search" style="background-color: ${colors.success}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đặt Sân Ngay</a>
+          </div>
+          
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #9ca3af;">Bạn nhận được email này vì đã đăng ký tài khoản tại Sport Arena.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"Sport Arena" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `⚽ Sân mới xuất hiện: ${details.name} - Trải nghiệm ngay!`,
     html,
   });
 };

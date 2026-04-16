@@ -5,31 +5,33 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-// Danh sách ảnh mẫu (Bạn có thể thay bằng ảnh thật của khách sạn)
-const SLIDES = [
-  {
-    id: 1,
-    image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
-    title: "Hệ Thống Đặt Sân Bóng Sân 7 Nhanh Chóng",
-    subtitle: "Sport Arena giúp bạn tìm và giữ chỗ sân 7 nhanh chóng. Hệ thống cụm sân được bảo trì thường xuyên.",
-  },
-  {
-    id: 2,
-    image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=1200",
-    title: "Sức Khỏe Và Đam Mê",
-    subtitle: "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, phù hợp cho anh em đá phủi.",
-  },
-  {
-    id: 3,
-    image: "/images/friendly-connection.png",
-    title: "Giao Hữu & Kết Nối",
-    subtitle: "Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng.",
-  },
-];
+import { useTranslations } from "next-intl";
 
 export const HeroSlider = () => {
+  const t = useTranslations("HeroSlider");
   const [current, setCurrent] = useState(0);
+
+  // Danh sách ảnh mẫu và nội dung đã được dịch
+  const SLIDES = [
+    {
+      id: 1,
+      image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
+      title: t("slide1.title"),
+      subtitle: t("slide1.subtitle"),
+    },
+    {
+      id: 2,
+      image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=1200",
+      title: t("slide2.title"),
+      subtitle: t("slide2.subtitle"),
+    },
+    {
+      id: 3,
+      image: "/images/friendly-connection.png",
+      title: t("slide3.title"),
+      subtitle: t("slide3.subtitle"),
+    },
+  ];
 
   // Tự động chuyển slide sau 5 giây
   useEffect(() => {

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { vi, enUS } from "date-fns/locale";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Calendar as CalendarIcon,
   Search,
@@ -33,6 +34,10 @@ type LocationOption = {
 };
 
 export const SearchFilters = ({ className, vertical = false }: SearchFiltersProps) => {
+  const t = useTranslations("SearchFilters");
+  const currentLocale = useLocale();
+  const dateLocale = currentLocale === "en" ? enUS : vi;
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -128,12 +133,12 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
             <SelectTrigger className={cn(triggerClass, "hover:border-orange-400 focus:ring-orange-100")}>
               <div className={cn(iconBoxClass, "bg-orange-100 text-orange-600")}><Map className="h-5 w-5" /></div>
               <div className={textClass}>
-                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Khu vực</span>
-                <SelectValue placeholder="Chọn khu vực" />
+                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">{t("district")}</span>
+                <SelectValue placeholder={t("districtPlaceholder")} />
               </div>
             </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả khu vực</SelectItem>
+                <SelectItem value="all">{t("allDistricts")}</SelectItem>
                 <SelectItem value="Đống Đa">Đống Đa</SelectItem>
                 <SelectItem value="Cầu Giấy">Cầu Giấy</SelectItem>
                 <SelectItem value="Thanh Xuân">Thanh Xuân</SelectItem>
@@ -150,17 +155,17 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
             <SelectTrigger className={cn(triggerClass, "hover:border-emerald-400 focus:ring-emerald-100", !isDistrictSelected && "opacity-60 cursor-not-allowed")}>
               <div className={cn(iconBoxClass, "bg-emerald-100 text-emerald-600")}><MapPin className="h-5 w-5" /></div>
               <div className={textClass}>
-                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Cụm sân</span>
-                <SelectValue placeholder={!isDistrictSelected ? "Vui lòng chọn Khu vực trước" : (isLoadingLocations ? "Đang tải..." : "Bạn muốn đá ở đâu?")} />
+                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">{t("location")}</span>
+                <SelectValue placeholder={!isDistrictSelected ? t("locationWait") : (isLoadingLocations ? t("loading") : t("locationPlaceholder"))} />
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả cụm sân</SelectItem>
+              <SelectItem value="all">{t("allLocations")}</SelectItem>
               {filteredLocations.map((loc) => (
                 <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
               ))}
               {!isLoadingLocations && filteredLocations.length === 0 && (
-                 <div className="p-2 text-sm text-slate-500 text-center">Chưa có cụm sân nào</div>
+                 <div className="p-2 text-sm text-slate-500 text-center">{t("noLocations")}</div>
               )}
             </SelectContent>
           </Select>
@@ -175,11 +180,11 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
               <Button variant="outline" className={cn(triggerClass, "hover:border-rose-400 focus:ring-rose-100 justify-start")}>
                 <div className={cn(iconBoxClass, "bg-rose-100 text-rose-600")}><CalendarIcon className="h-5 w-5" /></div>
                 <div className={textClass}>
-                  <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Ngày đá</span>
+                  <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">{t("date")}</span>
                   {date ? (
-                    <span>{format(date, "dd/MM/yyyy", { locale: vi })}</span>
+                    <span>{format(date, "dd/MM/yyyy", { locale: dateLocale })}</span>
                   ) : (
-                    <span className="font-normal text-slate-400">Chọn ngày</span>
+                    <span className="font-normal text-slate-400">{t("datePlaceholder")}</span>
                   )}
                 </div>
               </Button>
@@ -191,7 +196,7 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
                 defaultMonth={date}
                 selected={date}
                 onSelect={setDate}
-                locale={vi}
+                locale={dateLocale}
                 disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
               />
             </PopoverContent>
@@ -206,12 +211,12 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
             <SelectTrigger className={cn(triggerClass, "hover:border-blue-400 focus:ring-blue-100")}>
               <div className={cn(iconBoxClass, "bg-blue-100 text-blue-600")}><Clock className="h-5 w-5" /></div>
               <div className={textClass}>
-                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">Khung giờ</span>
-                <SelectValue placeholder="Chọn ca đá" />
+                <span className="mb-1 block text-xs uppercase tracking-wider text-slate-400">{t("timeSlot")}</span>
+                <SelectValue placeholder={t("timeSlotPlaceholder")} />
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="all">{t("allTimeSlots")}</SelectItem>
               <SelectItem value="0530-0700">05:30 - 07:00</SelectItem>
               <SelectItem value="0700-0830">07:00 - 08:30</SelectItem>
               <SelectItem value="1600-1730">16:00 - 17:30</SelectItem>
@@ -230,11 +235,11 @@ export const SearchFilters = ({ className, vertical = false }: SearchFiltersProp
           className={cn(
             "h-[76px] w-full rounded-2xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all flex items-center justify-center p-0"
           )}
-          title="Tìm sân"
+          title={t("searchButton")}
         >
           <Search className={cn("h-6 w-6", !vertical && "lg:m-0 mr-2")} />
           <span className={cn(vertical ? "block text-lg" : "lg:hidden block text-lg")}>
-             {vertical ? "Tìm kiếm ngay" : "Tìm sân"}
+             {vertical ? t("searchButtonVertical") : t("searchButton")}
           </span>
         </Button>
       </div>

@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { broadcastNotification } from "@/actions/client/notifications";
+import { sendNewCourtEmail } from "@/lib/mail";
 
 const CourtSchema = z.object({
   name: z.string().min(1, "Tên sân không được để trống"),
@@ -34,27 +35,50 @@ export const createCourt = async (values: z.infer<typeof CourtSchema>) => {
 
     const { images, ...data } = validatedFields.data;
 
-    await db.court.create({
+    const court = await db.court.create({
       data: {
         ...data,
         images: {
           createMany: { data: images },
         },
       },
+      include: {
+        courtType: true
+      }
     });
 
-    // Tự động thông báo cho tất cả người dùng về sân mới
+    // 1. Gửi thông báo hệ thống (Notification Web)
     await broadcastNotification({
         title: "Sân bóng mới đã được thêm! ⚽",
-        message: `Chúng tôi vừa đưa vào hoạt động sân "${values.name}". Hãy trải nghiệm ngay!`,
+        message: `Chúng tôi vừa đưa vào hoạt động sân "${court.name}". Hãy trải nghiệm ngay!`,
         type: "NEWS",
         link: "/search"
     });
 
+    // 2. Gửi Email cho toàn bộ khách hàng (Role USER)
+    const users = await db.user.findMany({
+        where: { role: "USER" },
+        select: { email: true }
+    });
+
+    if (users.length > 0) {
+        // Gửi email đồng loạt (có thể dùng background job nếu list quá lớn)
+        const emailPromises = users.map(user => 
+            sendNewCourtEmail(user.email, {
+                name: court.name,
+                courtType: court.courtType.name,
+                image: images[0]?.url || ""
+            })
+        );
+        // Chạy ngầm việc gửi email để không block UI của Admin
+        Promise.all(emailPromises).catch(err => console.error("Lỗi gửi email sân mới:", err));
+    }
+
     revalidatePath("/admin/courts");
     revalidatePath("/search");
-    return { success: "Tạo sân thành công và đã gửi thông báo!" };
+    return { success: "Tạo sân thành công và đang gửi thông báo tới khách hàng!" };
   } catch (error) {
+    console.error("CREATE_COURT_ERROR:", error);
     return { error: "Lỗi hệ thống!" };
   }
 };

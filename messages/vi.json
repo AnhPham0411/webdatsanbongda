@@ -1,0 +1,99 @@
+{
+  "Navbar": {
+    "home": "Trang chủ",
+    "search": "Tìm sân",
+    "about": "Về chúng tôi",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "notifications": "Thông báo",
+    "wishlist": "Sân yêu thích"
+  },
+  "Hero": {
+    "title": "Đặt Sân Bóng Đá Số 1 Việt Nam",
+    "description": "Hệ thống quản lý và đặt sân bóng đá cỏ nhân tạo hiện đại, tiện lợi và uy tín nhất hiện nay.",
+    "searchPlaceholder": "Tìm kiếm sân bóng theo tên hoặc địa điểm...",
+    "searchButton": "Tìm ngay"
+  },
+  "Footer": {
+    "description": "Hệ thống sân bóng hiện đại và mặt cỏ đạt chuẩn, mang đến trải nghiệm thể thao tuyệt vời.",
+    "explore": "Khám phá",
+    "policy": "Chính sách",
+    "connect": "Kết nối",
+    "terms": "Điều khoản sử dụng",
+    "privacy": "Chính sách bảo mật",
+    "faq": "Câu hỏi thường gặp",
+    "rights": "All rights reserved.",
+    "cookies": "Cookie"
+  },
+  "SearchFilters": {
+    "district": "Khu vực",
+    "districtPlaceholder": "Chọn khu vực",
+    "allDistricts": "Tất cả khu vực",
+    "location": "Cụm sân",
+    "locationPlaceholder": "Bạn muốn đá ở đâu?",
+    "locationWait": "Vui lòng chọn Khu vực trước",
+    "loading": "Đang tải...",
+    "allLocations": "Tất cả cụm sân",
+    "noLocations": "Chưa có cụm sân nào",
+    "date": "Ngày đá",
+    "datePlaceholder": "Chọn ngày",
+    "timeSlot": "Khung giờ",
+    "timeSlotPlaceholder": "Chọn ca đá",
+    "allTimeSlots": "Tất cả",
+    "searchButton": "Tìm sân",
+    "searchButtonVertical": "Tìm kiếm ngay"
+  },
+  "HeroSlider": {
+    "slide1": {
+      "title": "Hệ Thống Đặt Sân Bóng Sân 7 Nhanh Chóng",
+      "subtitle": "Sport Arena giúp bạn tìm và giữ chỗ sân 7 nhanh chóng. Hệ thống cụm sân được bảo trì thường xuyên."
+    },
+    "slide2": {
+      "title": "Sức Khỏe Và Đam Mê",
+      "subtitle": "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, phù hợp cho anh em đá phủi."
+    },
+    "slide3": {
+      "title": "Giao Hữu & Kết Nối",
+      "subtitle": "Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng."
+    }
+  },
+  "Home": {
+    "whyChoose": {
+      "badge": "Dịch vụ đẳng cấp",
+      "title": "Tại sao chọn Sport Arena?",
+      "description": "Hệ thống cụm sân được bảo trì thường xuyên, mặt cỏ tốt, đèn sáng, phù hợp cho anh em đá phủi và giao lưu kết nối.",
+      "item1": { "title": "An toàn tuyệt đối", "desc": "Bảo mật thông tin & thanh toán an toàn." },
+      "item2": { "title": "Hỗ trợ 24/7", "desc": "Đội ngũ quản lý sân luôn sẵn sàng hỗ trợ bạn đặt lịch và tổ chức trận đấu." },
+      "item3": { "title": "Vị trí đắc địa", "desc": "Tọa lạc tại vị trí trung tâm, giao thông thuận tiện. Ví dụ: Cụm sân Chùa Láng, Hà Nội." },
+      "item4": { "title": "Dịch vụ tận tâm", "desc": "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, giúp anh em yên tâm thi đấu." }
+    },
+    "featured": {
+      "badge": "Gợi ý cho bạn",
+      "title": "Sân Bóng Nổi Bật",
+      "viewAll": "Xem tất cả",
+      "loading": "Đang tải danh sách sân...",
+      "emptyTitle": "Chưa có sân bóng nổi bật",
+      "emptyDesc": "Hiện tại chưa có sân nào đạt đánh giá cao. Mời bạn xem tất cả sân bóng.",
+      "viewAllLink": "Xem tất cả sân"
+    },
+    "amenities": {
+      "badge": "Tiện ích và Dịch vụ",
+      "title": "Dịch vụ và Tiện ích đầy đủ",
+      "description": "Sport Arena giúp bạn tìm và giữ chỗ sân chuyên nghiệp nhanh chóng. Cung cấp đầy đủ các nhu cầu thiết yếu cho anh em trước và sau trận đấu.",
+      "items": ["Cho thuê bóng & Áo pitch", "Canteen nước giải khát", "Khu vực nghỉ ngơi giữa hiệp", "Bãi đỗ xe rộng rãi"],
+      "cta": "Đặt sân ngay"
+    },
+    "cta": {
+      "title": "Sẵn Sàng Ra Sân!",
+      "description": "Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng. Nhận ưu đãi lên đến 20% tiền sân.",
+      "button": "Đặt sân ngay"
+    }
+  },
+  "CourtCard": {
+    "unavailable": "Hết sân",
+    "reviews": "đánh giá",
+    "perSlot": "/ ca",
+    "viewDetails": "Xem chi tiết"
+  }
+}

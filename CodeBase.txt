@@ -12,8 +12,8 @@ web_san_bong/
 │   │   │   ├── categories.ts  # CRUD Loại sân (Sân 5, 7, 11)
 │   │   │   ├── courts.ts      # CRUD Sân bóng & Gửi thông báo sân mới
 │   │   │   ├── bookings.ts    # Quản lý đơn đặt sân, duyệt bill, hủy đơn
-│   │   │   ├── voucher.ts     # CMS Voucher: Tạo mã, gửi tặng khách hàng
-│   │   │   ├── settings.ts    # Cấu hình website (Logo, Tên, Giờ mở cửa, Quy chuẩn hủy sân)
+│   │   │   ├── voucher.ts     # CMS Voucher: Tạo mã, gửi chuyên biệt cho Top Chi tiêu
+│   │   │   ├── settings.ts    # Cấu hình website (Gồm Chế độ bảo trì, Logo, Tên, Giờ mở cửa)
 │   │   │   ├── reviews.ts     # Admin phản hồi đánh giá của khách
 │   │   │   ├── calendar.ts    # Lấy dữ liệu lịch đặt sân (TimeSlots)
 │   │   │   ├── users.ts       # Quản lý người dùng và phân quyền (Admin, Staff, User)
@@ -44,8 +44,10 @@ web_san_bong/
 │   │   ├── mail.ts            # Nodemailer integration (Send email confirmation)
 │   │   └── auth.ts            # NextAuth Configuration (JWT, Callbacks)
 
-# Cơ chế nghiệp vụ đặc biệt:
+# Cơ chế nghiệp vụ đặc biệt (Nâng cao):
 1. Giữ chỗ thông minh (Smart Hold): Khóa slot 10p khi PENDING -> Auto mở nếu không upload bill.
 2. Xác nhận 2 bước: Khách upload ảnh Bill (Xác nhận ảo) -> Admin duyệt (Xác nhận thực).
-3. Voucher Engine: Hỗ trợ giảm % hoặc số tiền cố định, giới hạn đối tượng/số lượng.
-4. CRM tích hợp: Hệ thống Inquiry trực tuyến giúp phản hồi khách hàng ngay trên Dashboard.
+3. Voucher & Ranking Engine: Tự động xếp hạng Top 3 chi tiêu, hỗ trợ tìm kiếm và gán mã chuyên biệt.
+4. Chế độ bảo trì (Maintenance Mode): Chặn truy cập Giao diện & khóa API đặt sân cho khách, chỉ cho phép Admin hoạt động.
+5. Auth Normalization: Tự động chuẩn hóa Email (viết thường/xoá khoảng trắng) để sửa lỗi đăng nhập.
+6. CRM tích hợp: Hệ thống Inquiry trực tuyến giúp phản hồi khách hàng ngay trên Dashboard.

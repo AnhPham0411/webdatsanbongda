@@ -47,14 +47,25 @@ export default async function MyBookingsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {(bookings as any[]).map((booking) => (
-            <div key={booking.id} className="relative flex flex-col md:flex-row border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition">
-               {/* Nút xóa ở góc trái trên cùng (chỉ hiện cho đơn đã xong hoặc hủy) */}
-               {["CHECKED_OUT", "CANCELLED"].includes(booking.status) && (
-                 <div className="absolute top-2 left-2 z-20">
-                    <DeleteBookingButton bookingId={booking.id} />
-                 </div>
-               )}
+          {(bookings as any[]).map((booking) => {
+            // Tính toán xem đơn đã quá hạn chưa (PENDING và quá giờ kết thúc ca)
+            const matchEnd = new Date(booking.date);
+            if (booking.timeSlot) {
+              const timeEnd = new Date(booking.timeSlot.endTime);
+              matchEnd.setHours(timeEnd.getUTCHours(), timeEnd.getUTCMinutes(), 0, 0);
+            }
+            const isExpired = matchEnd.getTime() < Date.now();
+            const canDelete = ["CHECKED_OUT", "CANCELLED"].includes(booking.status) || 
+                              (booking.status === "PENDING" && isExpired);
+
+            return (
+              <div key={booking.id} className="relative flex flex-col md:flex-row border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition">
+                 {/* Nút xóa ở góc trái trên cùng (hiện cho đơn đã xong, hủy hoặc quá hạn) */}
+                 {canDelete && (
+                   <div className="absolute top-2 left-2 z-20">
+                      <DeleteBookingButton bookingId={booking.id} />
+                   </div>
+                 )}
 
                {/* Decorative blue bar */}
                <div className="w-2.5 bg-blue-600 shrink-0" />
@@ -175,7 +186,8 @@ export default async function MyBookingsPage() {
                   )}
                </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

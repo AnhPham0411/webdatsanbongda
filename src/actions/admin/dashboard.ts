@@ -57,7 +57,7 @@ export async function getDashboardStats() {
       court: { name: b.court?.name },
       createdAt: b.createdAt,
       status: b.status,
-      totalPrice: b.totalPrice
+      totalPrice: Number(b.totalPrice)
     }));
 
     // 3. THỐNG KÊ THEO KHU VỰC VÀ SÂN PHỔ BIẾN NHẤT

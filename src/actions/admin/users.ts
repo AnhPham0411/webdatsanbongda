@@ -67,3 +67,36 @@ export const getUsersOnly = async () => {
         return [];
     }
 };
+
+/**
+ * Lấy danh sách Top 3 khách hàng chi tiêu nhiều nhất.
+ * Phục vụ cho hệ thống Ranking Voucher và Dashboard.
+ */
+export const getTopSpenders = async () => {
+    try {
+        const usersData = await db.user.findMany({
+            where: { role: "USER" },
+            include: { 
+                bookings: {
+                    where: { paymentStatus: "PAID" },
+                    select: { totalPrice: true }
+                } 
+            },
+        });
+
+        const rankedUsers = usersData.map(u => ({
+            id: u.id,
+            name: u.name || u.email,
+            email: u.email,
+            image: u.image,
+            spent: u.bookings.reduce((sum, b) => sum + Number(b.totalPrice), 0)
+        }))
+        .sort((a, b) => b.spent - a.spent)
+        .slice(0, 3); // Lấy Top 3
+
+        return rankedUsers;
+    } catch (error) {
+        console.error("[GET_TOP_SPENDERS_ERROR]", error);
+        return [];
+    }
+};

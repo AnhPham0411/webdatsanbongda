@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { format } from "date-fns";
 import { BookingActions } from "@/components/admin/booking-actions";
+import { LiveRefresh } from "@/components/admin/live-refresh";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -74,6 +75,7 @@ export default async function BookingsPage() {
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
+      <LiveRefresh interval={30000} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Đơn đặt sân</h2>

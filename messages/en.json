@@ -1,0 +1,99 @@
+{
+  "Navbar": {
+    "home": "Home",
+    "search": "Find Courts",
+    "about": "About Us",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "notifications": "Notifications",
+    "wishlist": "Wishlist"
+  },
+  "Hero": {
+    "title": "Vietnam's #1 Football Field Booking",
+    "description": "Modern, convenient, and reputable artificial turf football field management and booking system.",
+    "searchPlaceholder": "Search football fields by name or location...",
+    "searchButton": "Search Now"
+  },
+  "Footer": {
+    "description": "Modern football field system with standard turf, providing a great sports experience.",
+    "explore": "Explore",
+    "policy": "Policy",
+    "connect": "Connect",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "faq": "FAQ",
+    "rights": "All rights reserved.",
+    "cookies": "Cookies"
+  },
+  "SearchFilters": {
+    "district": "Area",
+    "districtPlaceholder": "Select Area",
+    "allDistricts": "All Areas",
+    "location": "Cluster",
+    "locationPlaceholder": "Where do you want to play?",
+    "locationWait": "Please select Area first",
+    "loading": "Loading...",
+    "allLocations": "All Clusters",
+    "noLocations": "No clusters available",
+    "date": "Booking Date",
+    "datePlaceholder": "Select date",
+    "timeSlot": "Time Slot",
+    "timeSlotPlaceholder": "Select slot",
+    "allTimeSlots": "All",
+    "searchButton": "Find",
+    "searchButtonVertical": "Search Now"
+  },
+  "HeroSlider": {
+    "slide1": {
+      "title": "Fast 7-a-side Football Field Booking System",
+      "subtitle": "Sport Arena helps you find and book 7-a-side fields quickly. Regularly maintained court system."
+    },
+    "slide2": {
+      "title": "Health & Passion",
+      "subtitle": "High-quality artificial turf, LED lights for good illumination, perfect for enthusiasts."
+    },
+    "slide3": {
+      "title": "Friendly Match & Connection",
+      "subtitle": "Book fields with just a few clicks, clear schedule, fast support."
+    }
+  },
+  "Home": {
+    "whyChoose": {
+      "badge": "Premium Service",
+      "title": "Why Choose Sport Arena?",
+      "description": "Our courts are regularly maintained with high-quality turf and great lighting, perfect for friendly matches and professional play.",
+      "item1": { "title": "Absolute Safety", "desc": "Information security & safe online payments." },
+      "item2": { "title": "24/7 Support", "desc": "Our team is always ready to help you book and organize your matches." },
+      "item3": { "title": "Prime Location", "desc": "Located in the heart of the city with convenient traffic. E.g., Chua Lang, Hanoi." },
+      "item4": { "title": "Dedicated Service", "desc": "Quality artificial turf and LED lighting system for a great experience." }
+    },
+    "featured": {
+      "badge": "Suggested for You",
+      "title": "Featured Courts",
+      "viewAll": "View ALL",
+      "loading": "Loading court list...",
+      "emptyTitle": "No featured courts yet",
+      "emptyDesc": "No high-rated courts available at the moment. Please view all courts.",
+      "viewAllLink": "View all courts"
+    },
+    "amenities": {
+      "badge": "Amenities & Services",
+      "title": "Full Services & Amenities",
+      "description": "Sport Arena helps you find and book professional courts quickly. Providing all the essentials for players.",
+      "items": ["Ball & Bib Rentals", "Refreshment Canteen", "Half-time Rest Area", "Spacious Parking"],
+      "cta": "Book Now"
+    },
+    "cta": {
+      "title": "Ready to Play!",
+      "description": "Book a court with just a few clicks, clear schedule, and fast support. Get up to 20% discount.",
+      "button": "Book Now"
+    }
+  },
+  "CourtCard": {
+    "unavailable": "Fully Booked",
+    "reviews": "reviews",
+    "perSlot": "/ slot",
+    "viewDetails": "View Details"
+  }
+}

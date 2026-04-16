@@ -14,6 +14,8 @@ import { getWishlist } from "@/actions/client/get-wishlist";
 import { toggleWishlist } from "@/actions/client/wishlist"; 
 import { useWishlistStore } from "../../hooks/use-wishlist-store"; 
 import { NotificationNav } from "@/components/client/notification-nav";
+import { LanguageSwitcher } from "@/components/client/language-switcher";
+import { useTranslations } from "next-intl";
 
 const WishlistNav = () => {
   const { data: session } = useSession();
@@ -118,14 +120,21 @@ const WishlistNav = () => {
 };
 
 export const Navbar = () => {
+  const t = useTranslations("Navbar");
   const pathname = usePathname();
   const { data: session } = useSession();
 
+  // Kiểm tra active route (loại bỏ locale để so khớp)
+  const isHome = pathname === "/" || pathname === "/vi" || pathname === "/en";
+  const isSearch = pathname.includes("/search");
+  const isAbout = pathname.includes("/about");
+  const isContact = pathname.includes("/contact");
+
   const routes = [
-    { href: "/", label: "Trang chủ", active: pathname === "/" },
-    { href: "/search", label: "Tìm sân", active: pathname === "/search" },
-    { href: "/about", label: "Về chúng tôi", active: pathname === "/about" },
-    { href: "/contact", label: "Liên hệ", active: pathname === "/contact" },
+    { href: "/", label: t("home"), active: isHome },
+    { href: "/search", label: t("search"), active: isSearch },
+    { href: "/about", label: t("about"), active: isAbout },
+    { href: "/contact", label: t("contact"), active: isContact },
   ];
 
   return (
@@ -165,7 +174,8 @@ export const Navbar = () => {
 
         <div className="flex items-center gap-2">
           
-          <div className="hidden md:flex items-center gap-1 mr-1">
+          <div className="hidden md:flex items-center gap-3 mr-1">
+             <LanguageSwitcher />
              <NotificationNav />
              <WishlistNav />
           </div>

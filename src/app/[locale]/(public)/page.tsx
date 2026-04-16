@@ -20,7 +20,10 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+import { getTranslations } from "next-intl/server";
+
 export default async function HomePage(props: PageProps) {
+  const t = await getTranslations("Hero");
   const params = await props.searchParams;
   const session = await auth();
 
@@ -51,6 +54,8 @@ export default async function HomePage(props: PageProps) {
     .sort((a, b) => b.avgRating - a.avgRating)
     .slice(0, 8);
 
+  const currentT = await getTranslations("Home");
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50 font-sans">
       
@@ -73,17 +78,17 @@ export default async function HomePage(props: PageProps) {
         {/* 2. Phần Giới thiệu: Lý do lựa chọn hệ thống Sport Arena */}
         <section>
              <div className="text-center mb-16 space-y-3">
-                 <span className="text-blue-600 font-bold tracking-widest uppercase text-xs">Dịch vụ đẳng cấp</span>
-                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">Tại sao chọn Sport Arena?</h2>
-                 <p className="text-slate-500 max-w-2xl mx-auto italic">Hệ thống cụm sân được bảo trì thường xuyên, mặt cỏ tốt, đèn sáng, phù hợp cho anh em đá phủi và giao lưu kết nối.</p>
+                 <span className="text-blue-600 font-bold tracking-widest uppercase text-xs">{currentT("whyChoose.badge")}</span>
+                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">{currentT("whyChoose.title")}</h2>
+                 <p className="text-slate-500 max-w-2xl mx-auto italic">{currentT("whyChoose.description")}</p>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                    { icon: ShieldCheck, title: "An toàn tuyệt đối", desc: "Bảo mật thông tin & thanh toán an toàn.", color: "bg-green-100 text-green-600" },
-                    { icon: Clock, title: "Hỗ trợ 24/7", desc: "Đội ngũ quản lý sân luôn sẵn sàng hỗ trợ bạn đặt lịch và tổ chức trận đấu.", color: "bg-blue-100 text-blue-600" },
-                    { icon: MapPin, title: "Vị trí đắc địa", desc: "Tọa lạc tại vị trí trung tâm, giao thông thuận tiện. Ví dụ: Cụm sân Chùa Láng, Đống Đa, Hà Nội.", color: "bg-purple-100 text-purple-600" },
-                    { icon: Heart, title: "Dịch vụ tận tâm", desc: "Mặt cỏ nhân tạo chất lượng, dàn đèn LED bù sáng tốt, giúp anh em yên tâm thi đấu.", color: "bg-red-100 text-red-600" },
+                    { icon: ShieldCheck, title: currentT("whyChoose.item1.title"), desc: currentT("whyChoose.item1.desc"), color: "bg-green-100 text-green-600" },
+                    { icon: Clock, title: currentT("whyChoose.item2.title"), desc: currentT("whyChoose.item2.desc"), color: "bg-blue-100 text-blue-600" },
+                    { icon: MapPin, title: currentT("whyChoose.item3.title"), desc: currentT("whyChoose.item3.desc"), color: "bg-purple-100 text-purple-600" },
+                    { icon: Heart, title: currentT("whyChoose.item4.title"), desc: currentT("whyChoose.item4.desc"), color: "bg-red-100 text-red-600" },
                 ].map((item, idx) => (
                     <div key={idx} className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
                         <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -102,31 +107,31 @@ export default async function HomePage(props: PageProps) {
             <div className="space-y-2">
                 <div className="flex items-center gap-2">
                     <div className="h-1 w-10 bg-blue-600 rounded-full"></div>
-                    <span className="text-blue-600 font-bold uppercase text-sm tracking-widest">Gợi ý cho bạn</span>
+                    <span className="text-blue-600 font-bold uppercase text-sm tracking-widest">{currentT("featured.badge")}</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-                    Sân Bóng Nổi Bật
+                    {currentT("featured.title")}
                 </h2>
             </div>
             <Link href="/courts">
                 <Button variant="outline" className="rounded-full px-6 border-slate-300 hover:border-blue-600 hover:text-blue-600 transition-colors">
-                    Xem tất cả <ArrowRight className="ml-2 h-4 w-4" />
+                    {currentT("featured.viewAll")} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </Link>
           </div>
           
-          <Suspense fallback={<div className="h-40 flex items-center justify-center">Đang tải danh sách sân...</div>}>
+          <Suspense fallback={<div className="h-40 flex items-center justify-center">{currentT("featured.loading")}</div>}>
             {highRatedCourts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 text-center">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                         <LayoutGrid className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900">Chưa có sân bóng nổi bật</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">{currentT("featured.emptyTitle")}</h3>
                     <p className="text-slate-500 max-w-sm mt-2">
-                        Hiện tại chưa có sân nào đạt đánh giá cao. Mời bạn xem tất cả sân bóng.
+                        {currentT("featured.emptyDesc")}
                     </p>
                     <Link href="/courts">
-                        <Button variant="link" className="mt-2 text-blue-600">Xem tất cả sân</Button>
+                        <Button variant="link" className="mt-2 text-blue-600">{currentT("featured.viewAllLink")}</Button>
                     </Link>
                 </div>
             ) : (
@@ -145,15 +150,15 @@ export default async function HomePage(props: PageProps) {
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center bg-white rounded-3xl p-8 lg:p-12 shadow-lg border border-slate-100 overflow-hidden">
             <div className="space-y-6">
-                <span className="text-orange-500 font-bold uppercase text-sm tracking-widest">Tiện ích và Dịch vụ</span>
+                <span className="text-orange-500 font-bold uppercase text-sm tracking-widest">{currentT("amenities.badge")}</span>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">
-                    Dịch vụ và Tiện ích đầy đủ
+                    {currentT("amenities.title")}
                 </h2>
                 <p className="text-slate-500 text-lg leading-relaxed">
-                    Sport Arena giúp bạn tìm và giữ chỗ sân chuyên nghiệp nhanh chóng. Cung cấp đầy đủ các nhu cầu thiết yếu cho anh em trước và sau trận đấu.
+                    {currentT("amenities.description")}
                 </p>
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {['Cho thuê bóng & Áo pitch', 'Canteen nước giải khát', 'Khu vực nghỉ ngơi giữa hiệp', 'Bãi đỗ xe rộng rãi'].map((item, i) => (
+                    {currentT.raw("amenities.items").map((item: string, i: number) => (
                         <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
                             <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">
                                 <ShieldCheck className="h-4 w-4" />
@@ -163,7 +168,7 @@ export default async function HomePage(props: PageProps) {
                     ))}
                 </ul>
                 <Button asChild className="mt-4 bg-slate-900 hover:bg-slate-800 text-white px-8 py-6 rounded-xl h-auto text-lg w-full md:w-auto">
-                    <Link href="/courts">Đặt sân ngay</Link>
+                    <Link href="/courts">{currentT("amenities.cta")}</Link>
                 </Button>
             </div>
             <div className="relative h-[300px] lg:h-[500px] rounded-2xl overflow-hidden group">
@@ -198,15 +203,15 @@ export default async function HomePage(props: PageProps) {
              
              <div className="relative z-10 max-w-4xl mx-auto space-y-6">
                  <h2 className="text-4xl md:text-5xl font-extrabold text-white tracking-widest drop-shadow-lg">
-                     Sẵn Sàng Ra Sân!
+                     {currentT("cta.title")}
                  </h2>
                  <p className="text-gray-200 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                     Đặt sân chỉ với vài cú click, lịch trình rõ ràng, hỗ trợ nhanh chóng. Nhận ưu đãi lên đến <span className="text-yellow-400 font-bold">20%</span> tiền sân.
+                     {currentT("cta.description")}
                  </p>
                  <div className="pt-4">
                     <Link href="/courts">
                         <Button size="lg" className="h-14 px-12 text-lg bg-white text-slate-900 hover:bg-gray-100 font-bold rounded-lg shadow-2xl border-0 transition-all hover:scale-105 active:scale-95">
-                            Đặt sân ngay
+                            {currentT("cta.button")}
                         </Button>
                     </Link>
                  </div>

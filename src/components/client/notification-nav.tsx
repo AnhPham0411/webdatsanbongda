@@ -54,8 +54,9 @@ export const NotificationNav = () => {
         <Button variant="ghost" size="icon" className="relative text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors">
           <Bell className={cn("h-5 w-5", unreadCount > 0 ? "animate-swing" : "")} />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
+            <span className="absolute top-2 right-2.5 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 ring-1 ring-white"></span>
             </span>
           )}
         </Button>
@@ -96,7 +97,11 @@ export const NotificationNav = () => {
                                     {n.title}
                                 </p>
                                 <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                                    {n.message}
+                                    {n.message.split(/(\*\*.*?\*\*)/).map((part: string, i: number) => 
+                                        part.startsWith("**") && part.endsWith("**") 
+                                            ? <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong> 
+                                            : part
+                                    )}
                                 </p>
                                 <p className="text-[10px] text-slate-400 mt-1">
                                     {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: vi })}
